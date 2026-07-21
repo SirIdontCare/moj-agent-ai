@@ -1,0 +1,34 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# Next.js build output
+/.next/
+/out/
+
+# Production builds and test coverage
+/build/
+/coverage/
+
+# Local environment files (may contain API keys)
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+/.npm-cache/
+.eslintcache
+*.tsbuildinfo
+
+# Vercel and OS/editor files
+.vercel
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

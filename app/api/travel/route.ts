@@ -7,7 +7,8 @@ import {
   type LanguageModelMiddleware,
   type UIMessage,
 } from "ai";
-import { googleSearchTool, reactTools } from "../../lib/tools";
+import { createReactTools, googleSearchTool } from "../../lib/tools";
+import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
 export const maxDuration = 60;
 
@@ -20,11 +21,6 @@ const safetyPrompt = `
 - Przykład: jeśli pogoda nie działa → "Nie udało się sprawdzić pogody w X. Mogę poszukać w Google lub spróbować innego miasta."
 - NIGDY nie wywołuj tego samego narzędzia z tymi samymi argumentami dwa razy z rzędu.
 - Jeśli po 3 nieudanych próbach nie masz danych — powiedz wprost czego brakuje.`;
-
-const travelTools = {
-  ...reactTools,
-  googleSearch: googleSearchTool,
-};
 
 const systemPrompt = `Jesteś profesjonalnym asystentem podróży. Gdy użytkownik opisuje
 planowaną podróż, AUTONOMICZNIE zbierasz wszystkie potrzebne informacje.
@@ -95,6 +91,8 @@ const fallbackMiddleware: LanguageModelMiddleware = {
 };
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
   const { messages }: { messages: UIMessage[] } = await request.json();
   const model = wrapLanguageModel({
     model: google(PRIMARY_MODEL),
@@ -107,7 +105,10 @@ export async function POST(request: Request) {
     messages: await convertToModelMessages(messages),
     stopWhen: isStepCount(10),
     toolChoice: "auto",
-    tools: travelTools,
+    tools: {
+      ...createReactTools(auth.supabase, auth.user.id),
+      googleSearch: googleSearchTool,
+    },
   });
 
   return result.toUIMessageStreamResponse({

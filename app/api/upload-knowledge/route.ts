@@ -1,6 +1,6 @@
 import { splitIntoChunks } from "@/lib/chunking";
 import { generateEmbedding } from "@/lib/embeddings";
-import { supabase } from "@/lib/supabase";
+import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
 export const maxDuration = 300;
 
@@ -14,6 +14,9 @@ function event(type: string, data: Record<string, unknown>) {
 }
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
+  const { supabase, user } = auth;
   const body = (await request.json().catch(() => null)) as UploadBody | null;
   const title = typeof body?.title === "string" ? body.title.trim() : "";
   const content = typeof body?.content === "string" ? body.content.trim() : "";
@@ -57,6 +60,7 @@ export async function POST(request: Request) {
           send("progress", { current: index + 1, total: chunks.length });
           const embedding = await generateEmbedding(chunk);
           const { error } = await supabase.from("documents").insert({
+            user_id: user.id,
             title,
             content: chunk,
             embedding,

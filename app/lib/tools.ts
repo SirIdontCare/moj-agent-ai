@@ -2,6 +2,7 @@ import { google } from "@ai-sdk/google";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { generateText, tool, zodSchema } from "ai";
 import { z } from "zod/v4";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { searchKnowledge } from "@/lib/knowledge";
 
 const PRIMARY_MODEL = "gemini-2.5-flash";
@@ -512,35 +513,37 @@ export const googleSearchTool = tool({
   },
 });
 
-export const searchKnowledgeTool = tool({
-  description:
-    "Przeszukuje bazę wiedzy firmy: cenniki, pakiety, FAQ, regulaminy, warunki i oferty. Używaj zawsze przed odpowiedzią na pytania o firmę, jej usługi lub ceny.",
-  inputSchema: zodSchema(
-    z.object({
-      query: z
-        .string()
-        .trim()
-        .min(2)
-        .max(1000)
-        .describe("Zwięzłe pytanie lub fraza do wyszukania w dokumentach firmy"),
-    }),
-  ),
-  execute: async ({ query }) => {
-    try {
-      return await searchKnowledge(query);
-    } catch (error) {
-      return {
-        results: [],
-        total_found: 0,
-        source_documents: [],
-        error:
-          error instanceof Error
-            ? `Nie udało się przeszukać bazy wiedzy: ${error.message}`
-            : "Nie udało się przeszukać bazy wiedzy.",
-      };
-    }
-  },
-});
+function createSearchKnowledgeTool(supabase: SupabaseClient, userId: string) {
+  return tool({
+    description:
+      "Przeszukuje bazę wiedzy firmy: cenniki, pakiety, FAQ, regulaminy, warunki i oferty. Używaj zawsze przed odpowiedzią na pytania o firmę, jej usługi lub ceny.",
+    inputSchema: zodSchema(
+      z.object({
+        query: z
+          .string()
+          .trim()
+          .min(2)
+          .max(1000)
+          .describe("Zwięzłe pytanie lub fraza do wyszukania w dokumentach firmy"),
+      }),
+    ),
+    execute: async ({ query }) => {
+      try {
+        return await searchKnowledge(supabase, userId, query);
+      } catch (error) {
+        return {
+          results: [],
+          total_found: 0,
+          source_documents: [],
+          error:
+            error instanceof Error
+              ? `Nie udało się przeszukać bazy wiedzy: ${error.message}`
+              : "Nie udało się przeszukać bazy wiedzy.",
+        };
+      }
+    },
+  });
+}
 
 export const generateImageTool = tool({
   description:
@@ -608,15 +611,17 @@ export const generateImageTool = tool({
   },
 });
 
-export const reactTools = {
-  calculator: calculatorTool,
-  currentDateTime: currentDateTimeTool,
-  getWeather: getWeatherTool,
-  getExchangeRate: getExchangeRateTool,
-  getHolidays: getHolidaysTool,
-  searchWikipedia: searchWikipediaTool,
-  saveNote: saveNoteTool,
-  getNotes: getNotesTool,
-  readWebPage: readWebPageTool,
-  searchKnowledge: searchKnowledgeTool,
-};
+export function createReactTools(supabase: SupabaseClient, userId: string) {
+  return {
+    calculator: calculatorTool,
+    currentDateTime: currentDateTimeTool,
+    getWeather: getWeatherTool,
+    getExchangeRate: getExchangeRateTool,
+    getHolidays: getHolidaysTool,
+    searchWikipedia: searchWikipediaTool,
+    saveNote: saveNoteTool,
+    getNotes: getNotesTool,
+    readWebPage: readWebPageTool,
+    searchKnowledge: createSearchKnowledgeTool(supabase, userId),
+  };
+}

@@ -55,10 +55,20 @@ export default function ConversationPreview({ conversationId }: { conversationId
 
     async function loadConversation() {
       try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+        }
+
         const { data: conversationData, error: conversationError } = await supabase
           .from("conversations")
           .select("id, title, updated_at")
           .eq("id", conversationId)
+          .eq("user_id", user.id)
           .maybeSingle();
 
         if (conversationError) throw conversationError;
@@ -68,6 +78,7 @@ export default function ConversationPreview({ conversationId }: { conversationId
           .from("messages")
           .select("id, role, content, created_at")
           .eq("conversation_id", conversationId)
+          .eq("user_id", user.id)
           .order("created_at", { ascending: true });
 
         if (messageError) throw messageError;

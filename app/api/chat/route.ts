@@ -12,8 +12,9 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod/v4";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { searchKnowledge } from "@/lib/knowledge";
-import { supabase } from "@/lib/supabase";
+import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
 export const maxDuration = 60;
 
@@ -60,7 +61,7 @@ function extractUserName(text: string) {
   return introduction?.[1] ? normalizeName(introduction[1]) : "";
 }
 
-async function saveUserName(userId: string | undefined, name: string) {
+async function saveUserName(supabase: SupabaseClient, userId: string, name: string) {
   if (!isUuid(userId)) {
     return { error: "Brakuje identyfikatora użytkownika — nie mogę zapisać imienia." };
   }
@@ -89,7 +90,7 @@ function normalizePreferences(value: unknown) {
   ) as Record<string, string>;
 }
 
-async function getPersonalizationPrompt(userId: string | undefined) {
+async function getPersonalizationPrompt(supabase: SupabaseClient, userId: string) {
   if (!isUuid(userId)) {
     return "To nowy użytkownik. Na początku pierwszej rozmowy przywitaj się i zapytaj, jak ma na imię. Gdy je poda, użyj narzędzia saveUserName, żeby je zapamiętać.";
   }
@@ -116,7 +117,7 @@ async function getPersonalizationPrompt(userId: string | undefined) {
   }`;
 }
 
-function createSaveUserNameTool(userId: string | undefined) {
+function createSaveUserNameTool(supabase: SupabaseClient, userId: string) {
   return tool({
     description:
       "Zapisuje imię użytkownika. Użyj automatycznie, gdy użytkownik poda swoje imię lub nazwie się w rozmowie.",
@@ -126,12 +127,12 @@ function createSaveUserNameTool(userId: string | undefined) {
       }),
     ),
     execute: async ({ name }) => {
-      return saveUserName(userId, name);
+      return saveUserName(supabase, userId, name);
     },
   });
 }
 
-function createSaveUserPreferenceTool(userId: string | undefined) {
+function createSaveUserPreferenceTool(supabase: SupabaseClient, userId: string) {
   return tool({
     description:
       "Zapisuje trwałą preferencję użytkownika, np. ulubione jedzenie, miasto lub zainteresowanie. Używaj tylko, gdy użytkownik wyraźnie poda trwałą osobistą preferencję.",
@@ -420,35 +421,37 @@ const googleSearchTool = tool({
   },
 });
 
-const searchKnowledgeTool = tool({
-  description:
-    "Wyszukuje informacje w bazie wiedzy firmy: cenniki, FAQ, regulaminy, oferty, pakiety i warunki. Używaj zawsze przed odpowiedzią na pytania o firmę, ceny, koszty lub procedury.",
-  inputSchema: zodSchema(
-    z.object({
-      query: z
-        .string()
-        .trim()
-        .min(2)
-        .max(1000)
-        .describe("Pytanie użytkownika lub zwięzła fraza do wyszukania w dokumentach firmy"),
-    }),
-  ),
-  execute: async ({ query }) => {
-    try {
-      return await searchKnowledge(query);
-    } catch (error) {
-      return {
-        results: [],
-        total_found: 0,
-        source_documents: [],
-        error:
-          error instanceof Error
-            ? `Nie udało się przeszukać bazy wiedzy: ${error.message}`
-            : "Nie udało się przeszukać bazy wiedzy.",
-      };
-    }
-  },
-});
+function createSearchKnowledgeTool(supabase: SupabaseClient, userId: string) {
+  return tool({
+    description:
+      "Wyszukuje informacje w bazie wiedzy firmy: cenniki, FAQ, regulaminy, oferty, pakiety i warunki. Używaj zawsze przed odpowiedzią na pytania o firmę, ceny, koszty lub procedury.",
+    inputSchema: zodSchema(
+      z.object({
+        query: z
+          .string()
+          .trim()
+          .min(2)
+          .max(1000)
+          .describe("Pytanie użytkownika lub zwięzła fraza do wyszukania w dokumentach firmy"),
+      }),
+    ),
+    execute: async ({ query }) => {
+      try {
+        return await searchKnowledge(supabase, userId, query);
+      } catch (error) {
+        return {
+          results: [],
+          total_found: 0,
+          source_documents: [],
+          error:
+            error instanceof Error
+              ? `Nie udało się przeszukać bazy wiedzy: ${error.message}`
+              : "Nie udało się przeszukać bazy wiedzy.",
+        };
+      }
+    },
+  });
+}
 
 type InlineImagePart = {
   inlineData?: {
@@ -657,12 +660,15 @@ const fallbackMiddleware: LanguageModelMiddleware = {
 };
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
+  const { supabase, user } = auth;
+  const userId = user.id;
   const {
     messages,
     mode,
     model,
-    userId,
-  }: { messages: UIMessage[]; mode?: ChatMode; model?: ChatModel; userId?: string } =
+  }: { messages: UIMessage[]; mode?: ChatMode; model?: ChatModel } =
     await request.json();
 
   const selectedModel = getChatModel(model);
@@ -679,13 +685,13 @@ export async function POST(request: Request) {
   const detectedName = extractUserName(lastUserText);
 
   if (detectedName) {
-    await saveUserName(userId, detectedName);
+    await saveUserName(supabase, userId, detectedName);
   }
 
-  const personalizationPrompt = await getPersonalizationPrompt(userId);
+  const personalizationPrompt = await getPersonalizationPrompt(supabase, userId);
   const personalizationTools = {
-    saveUserName: createSaveUserNameTool(userId),
-    saveUserPreference: createSaveUserPreferenceTool(userId),
+    saveUserName: createSaveUserNameTool(supabase, userId),
+    saveUserPreference: createSaveUserPreferenceTool(supabase, userId),
   };
   const chatTools = {
     calculator: calculatorTool,
@@ -693,7 +699,7 @@ export async function POST(request: Request) {
     googleSearch: googleSearchTool,
     readWebPage: readWebPageTool,
     generateImage: generateImageTool,
-    searchKnowledge: searchKnowledgeTool,
+    searchKnowledge: createSearchKnowledgeTool(supabase, userId),
     ...personalizationTools,
   };
 

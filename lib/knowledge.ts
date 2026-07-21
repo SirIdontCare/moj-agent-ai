@@ -1,5 +1,5 @@
 import { generateEmbedding } from "@/lib/embeddings";
-import { supabase } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type KnowledgeMetadata = Record<string, unknown>;
 
@@ -159,6 +159,8 @@ function filterByLexicalRelevance(rows: MatchDocumentRow[], query: string) {
 }
 
 export async function searchKnowledge(
+  supabase: SupabaseClient,
+  userId: string,
   query: string,
   options: { matchThreshold?: number; matchCount?: number } = {},
 ): Promise<KnowledgeSearchResponse> {
@@ -196,7 +198,8 @@ export async function searchKnowledge(
     const { data: dateRows } = await supabase
       .from("documents")
       .select("id, created_at")
-      .in("id", ids);
+      .in("id", ids)
+      .eq("user_id", userId);
 
     for (const row of (dateRows ?? []) as DocumentDateRow[]) {
       createdAtById.set(row.id, row.created_at);

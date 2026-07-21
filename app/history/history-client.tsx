@@ -70,9 +70,19 @@ export default function HistoryClient() {
     setError("");
 
     try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+      }
+
       const { data: conversationData, error: conversationError } = await supabase
         .from("conversations")
         .select("id, title, created_at, updated_at")
+        .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
 
       if (conversationError) {
@@ -88,6 +98,7 @@ export default function HistoryClient() {
           .from("messages")
           .select("conversation_id, content, created_at")
           .in("conversation_id", conversationIds)
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
         if (messageError) {
@@ -153,10 +164,20 @@ export default function HistoryClient() {
     setError("");
 
     try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+      }
+
       const { error: messageError } = await supabase
         .from("messages")
         .delete()
-        .eq("conversation_id", conversation.id);
+        .eq("conversation_id", conversation.id)
+        .eq("user_id", user.id);
 
       if (messageError) {
         throw messageError;
@@ -165,7 +186,8 @@ export default function HistoryClient() {
       const { error: conversationError } = await supabase
         .from("conversations")
         .delete()
-        .eq("id", conversation.id);
+        .eq("id", conversation.id)
+        .eq("user_id", user.id);
 
       if (conversationError) {
         throw conversationError;

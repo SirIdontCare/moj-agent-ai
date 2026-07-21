@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const navigationItems = [
   { href: "/", label: "Dashboard", emoji: "🏠" },
@@ -32,7 +33,19 @@ function isActivePath(pathname: string, href: string) {
 
 export default function SiteNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email ?? ""));
+  }, []);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
 
   return (
     <>
@@ -74,6 +87,12 @@ export default function SiteNavigation() {
             );
           })}
         </nav>
+        <div className="sidebar-account">
+          {email ? <small title={email}>{email}</small> : null}
+          <button onClick={() => void handleSignOut()} type="button">
+            ↪ Wyloguj
+          </button>
+        </div>
       </aside>
       {isOpen ? (
         <button

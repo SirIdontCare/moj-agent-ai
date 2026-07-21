@@ -7,7 +7,8 @@ import {
   type LanguageModelMiddleware,
   type UIMessage,
 } from "ai";
-import { reactTools } from "../../lib/tools";
+import { createReactTools } from "../../lib/tools";
+import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
 export const maxDuration = 60;
 
@@ -102,6 +103,8 @@ const fallbackMiddleware: LanguageModelMiddleware = {
 };
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
   const { messages }: { messages: UIMessage[] } = await request.json();
   const requireKnowledgeSearch = shouldSearchKnowledge(getLastUserText(messages));
   const model = wrapLanguageModel({
@@ -115,7 +118,7 @@ export async function POST(request: Request) {
     messages: await convertToModelMessages(messages),
     stopWhen: isStepCount(8),
     toolChoice: "auto",
-    tools: reactTools,
+    tools: createReactTools(auth.supabase, auth.user.id),
     prepareStep: ({ stepNumber }) =>
       requireKnowledgeSearch && stepNumber === 0
         ? { toolChoice: { type: "tool", toolName: "searchKnowledge" } }

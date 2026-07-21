@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 import SiteNavigation from "./site-navigation";
-import { supabase } from "@/lib/supabase";
+import { getAuthHeaders, supabase } from "@/lib/supabase";
 
 const chatModes = {
   casual: { emoji: "💬", label: "Casual" },
@@ -49,6 +49,19 @@ type ChatClientProps = {
   showTravelCards?: boolean;
   showDiagnostics?: boolean;
 };
+
+async function requireUserId() {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+  }
+
+  return user.id;
+}
 
 type AttachedImage = {
   filePart: FileUIPart;
@@ -771,7 +784,10 @@ export default function ChatClient({
   const conversationHasUserMessageRef = useRef(false);
   const handledMessageIdsRef = useRef(new Set<string>());
   const userIdRef = useRef<string | null>(null);
-  const transport = useMemo(() => new DefaultChatTransport({ api }), [api]);
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api, headers: async () => getAuthHeaders() }),
+    [api],
+  );
   const { messages, sendMessage, setMessages, status, error } = useChat({ transport });
 
   const isGenerating = status === "submitted" || status === "streaming";
@@ -820,20 +836,7 @@ export default function ChatClient({
 
     async function loadUserProfile() {
       try {
-        let userId = localStorage.getItem("user_id");
-
-        if (!userId) {
-          userId = crypto.randomUUID();
-          localStorage.setItem("user_id", userId);
-
-          const { error: createError } = await supabase
-            .from("user_profiles")
-            .insert({ id: userId });
-
-          if (createError && createError.code !== "23505") {
-            throw createError;
-          }
-        }
+        const userId = await requireUserId();
 
         userIdRef.current = userId;
         const { data, error: profileLoadError } = await supabase
@@ -890,7 +893,12 @@ export default function ChatClient({
       setIsHistoryLoading(true);
 
       try {
-        const conversationQuery = supabase.from("conversations").select("id");
+        const userId = await requireUserId();
+        userIdRef.current = userId;
+        const conversationQuery = supabase
+          .from("conversations")
+          .select("id")
+          .eq("user_id", userId);
         const { data: conversation, error: conversationError } = requestedConversationId
           ? await conversationQuery.eq("id", requestedConversationId).maybeSingle()
           : await conversationQuery.order("updated_at", { ascending: false }).limit(1).maybeSingle();
@@ -914,6 +922,7 @@ export default function ChatClient({
           .from("messages")
           .select("id, role, content")
           .eq("conversation_id", conversation.id)
+          .eq("user_id", userId)
           .order("created_at", { ascending: true });
 
         if (messagesError) {
@@ -968,9 +977,11 @@ export default function ChatClient({
     }
 
     const createConversation = (async () => {
+      const userId = userIdRef.current ?? (await requireUserId());
+      userIdRef.current = userId;
       const { data, error: createError } = await supabase
         .from("conversations")
-        .insert({ title: getConversationTitle(firstMessage) })
+        .insert({ title: getConversationTitle(firstMessage), user_id: userId })
         .select("id")
         .single();
 
@@ -1021,8 +1032,10 @@ export default function ChatClient({
       }
 
       const now = new Date().toISOString();
+      const userId = userIdRef.current ?? (await requireUserId());
       const [{ error: messageError }, { error: conversationError }] = await Promise.all([
         supabase.from("messages").insert({
+          user_id: userId,
           conversation_id: conversationId,
           role: message.role,
           content,
@@ -1034,7 +1047,8 @@ export default function ChatClient({
               ? { title: getConversationTitle(content), updated_at: now }
               : { updated_at: now },
           )
-          .eq("id", conversationId),
+          .eq("id", conversationId)
+          .eq("user_id", userId),
       ]);
 
       if (messageError || conversationError) {
@@ -1045,13 +1059,12 @@ export default function ChatClient({
   );
 
   const saveProfileName = useCallback(async (name: string) => {
-    if (!userIdRef.current) {
-      return false;
-    }
+    const userId = userIdRef.current ?? (await requireUserId());
+    userIdRef.current = userId;
 
     const { data, error: saveError } = await supabase
       .from("user_profiles")
-      .upsert({ id: userIdRef.current, name }, { onConflict: "id" })
+      .upsert({ id: userId, name }, { onConflict: "id" })
       .select("id, name, preferences")
       .single();
 
@@ -1267,7 +1280,7 @@ export default function ChatClient({
         text: textToSend,
         files: imageToSend ? [imageToSend.filePart] : undefined,
       },
-      { body: { mode: requestMode ?? mode, model, userId: userIdRef.current } },
+      { body: { mode: requestMode ?? mode, model } },
     );
   }
 

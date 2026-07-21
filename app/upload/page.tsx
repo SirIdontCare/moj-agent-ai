@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import { authenticatedFetch } from "@/lib/supabase";
 
 type KnowledgeDocument = {
   title: string;
@@ -96,7 +97,7 @@ export default function UploadPage() {
     setIsLoadingDocuments(true);
 
     try {
-      const response = await fetch("/api/knowledge-documents", { cache: "no-store" });
+      const response = await authenticatedFetch("/api/knowledge-documents", { cache: "no-store" });
       const data = (await response.json()) as { documents?: KnowledgeDocument[]; error?: string };
 
       if (!response.ok) {
@@ -129,7 +130,7 @@ export default function UploadPage() {
     setProgress(null);
 
     try {
-      const response = await fetch("/api/upload-knowledge", {
+      const response = await authenticatedFetch("/api/upload-knowledge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, content }),
@@ -194,7 +195,7 @@ export default function UploadPage() {
     setNotice("");
 
     try {
-      const response = await fetch("/api/knowledge-documents", {
+      const response = await authenticatedFetch("/api/knowledge-documents", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: documentTitle }),

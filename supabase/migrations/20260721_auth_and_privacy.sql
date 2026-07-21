@@ -1,41 +1,63 @@
--- Kompletny schemat aplikacji z Supabase Auth i izolacją danych per użytkownik.
--- Uruchom w Supabase Dashboard -> SQL Editor dla nowego projektu.
+-- Aktualizacja bazy z lekcji 05-06 do modelu prywatnych danych użytkownika.
+-- Stare rekordy bez user_id są usuwane zgodnie z instrukcją warsztatu W3.
 
-create extension if not exists vector;
+alter table public.conversations
+  add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.documents
+  add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.messages
+  add column if not exists user_id uuid references auth.users(id) on delete cascade;
 
-create table if not exists public.conversations (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  title text,
-  updated_at timestamptz not null default now()
-);
+update public.messages messages
+set user_id = conversations.user_id
+from public.conversations conversations
+where messages.conversation_id = conversations.id
+  and messages.user_id is null;
 
-create table if not exists public.messages (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  conversation_id uuid not null references public.conversations(id) on delete cascade,
-  role text,
-  content text
-);
+delete from public.messages
+where conversation_id in (
+  select id from public.conversations where user_id is null
+) or conversation_id is null
+  or not exists (
+    select 1 from public.conversations
+    where conversations.id = messages.conversation_id
+  );
+delete from public.conversations where user_id is null;
+delete from public.documents where user_id is null;
+delete from public.user_profiles profile
+where not exists (select 1 from auth.users users where users.id = profile.id);
 
-create table if not exists public.user_profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  name text,
-  preferences jsonb not null default '{}'::jsonb
-);
+alter table public.conversations alter column user_id set not null;
+alter table public.documents alter column user_id set not null;
+alter table public.messages alter column user_id set not null;
+alter table public.user_profiles alter column id drop default;
 
-create table if not exists public.documents (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  title text not null,
-  content text not null,
-  embedding vector(768) not null,
-  metadata jsonb not null default '{}'::jsonb
-);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'user_profiles_id_fkey'
+      and conrelid = 'public.user_profiles'::regclass
+  ) then
+    alter table public.user_profiles
+      add constraint user_profiles_id_fkey
+      foreign key (id) references auth.users(id) on delete cascade;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'messages_conversation_id_fkey'
+      and conrelid = 'public.messages'::regclass
+  ) then
+    alter table public.messages
+      add constraint messages_conversation_id_fkey
+      foreign key (conversation_id) references public.conversations(id) on delete cascade;
+  end if;
+end $$;
+
+alter table public.messages alter column conversation_id set not null;
 
 create index if not exists conversations_user_updated_idx
   on public.conversations (user_id, updated_at desc);
@@ -53,22 +75,17 @@ alter table public.documents enable row level security;
 
 drop policy if exists "Users manage their conversations" on public.conversations;
 create policy "Users manage their conversations"
-  on public.conversations
-  for all
-  to authenticated
+  on public.conversations for all to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
 drop policy if exists "Users manage messages in their conversations" on public.messages;
 create policy "Users manage messages in their conversations"
-  on public.messages
-  for all
-  to authenticated
+  on public.messages for all to authenticated
   using (
     (select auth.uid()) = user_id
     and exists (
-      select 1
-      from public.conversations
+      select 1 from public.conversations
       where conversations.id = messages.conversation_id
         and conversations.user_id = (select auth.uid())
     )
@@ -76,8 +93,7 @@ create policy "Users manage messages in their conversations"
   with check (
     (select auth.uid()) = user_id
     and exists (
-      select 1
-      from public.conversations
+      select 1 from public.conversations
       where conversations.id = messages.conversation_id
         and conversations.user_id = (select auth.uid())
     )
@@ -85,17 +101,13 @@ create policy "Users manage messages in their conversations"
 
 drop policy if exists "Users manage their profile" on public.user_profiles;
 create policy "Users manage their profile"
-  on public.user_profiles
-  for all
-  to authenticated
+  on public.user_profiles for all to authenticated
   using ((select auth.uid()) = id)
   with check ((select auth.uid()) = id);
 
 drop policy if exists "Users manage their documents" on public.documents;
 create policy "Users manage their documents"
-  on public.documents
-  for all
-  to authenticated
+  on public.documents for all to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 

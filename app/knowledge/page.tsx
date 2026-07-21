@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import { authenticatedFetch } from "@/lib/supabase";
 
 type KnowledgeDocument = {
   title: string;
@@ -61,7 +62,7 @@ export default function KnowledgePage() {
     setError("");
 
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `/api/knowledge-documents?title=${encodeURIComponent(title)}`,
         { cache: "no-store" },
       );
@@ -88,7 +89,7 @@ export default function KnowledgePage() {
     setError("");
 
     try {
-      const response = await fetch("/api/knowledge-documents", { cache: "no-store" });
+      const response = await authenticatedFetch("/api/knowledge-documents", { cache: "no-store" });
       const data = (await response.json()) as {
         documents?: KnowledgeDocument[];
         error?: string;
@@ -139,7 +140,7 @@ export default function KnowledgePage() {
     setError("");
 
     try {
-      const response = await fetch("/api/knowledge-documents", {
+      const response = await authenticatedFetch("/api/knowledge-documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchQuery }),

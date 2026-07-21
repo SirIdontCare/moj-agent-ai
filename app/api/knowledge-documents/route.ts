@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchKnowledge } from "@/lib/knowledge";
-import { supabase } from "@/lib/supabase";
+import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
 type DocumentRow = {
   title: string | null;
@@ -22,6 +22,9 @@ type FragmentRow = {
 };
 
 export async function GET(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
+  const { supabase, user } = auth;
   const title = new URL(request.url).searchParams.get("title")?.trim() ?? "";
 
   if (title) {
@@ -29,6 +32,7 @@ export async function GET(request: Request) {
       .from("documents")
       .select("id, title, content, metadata, created_at")
       .eq("title", title)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: true })
       .limit(500);
 
@@ -48,6 +52,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("documents")
     .select("title, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -78,6 +83,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
   const body = (await request.json().catch(() => null)) as { query?: unknown } | null;
   const query = typeof body?.query === "string" ? body.query.trim() : "";
 
@@ -89,7 +96,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await searchKnowledge(query, { matchThreshold: 0, matchCount: 5 });
+    const result = await searchKnowledge(auth.supabase, auth.user.id, query, {
+      matchThreshold: 0,
+      matchCount: 5,
+    });
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
@@ -103,6 +113,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
   const body = (await request.json().catch(() => null)) as { title?: unknown } | null;
   const title = typeof body?.title === "string" ? body.title.trim() : "";
 
@@ -110,7 +122,11 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Tytuł dokumentu jest wymagany." }, { status: 400 });
   }
 
-  const { error } = await supabase.from("documents").delete().eq("title", title);
+  const { error } = await auth.supabase
+    .from("documents")
+    .delete()
+    .eq("title", title)
+    .eq("user_id", auth.user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

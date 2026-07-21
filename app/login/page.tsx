@@ -38,6 +38,17 @@ function LoginForm() {
 
         if (signUpError) throw signUpError;
 
+        if (data.session && data.user) {
+          const { error: profileError } = await supabase
+            .from("user_profiles")
+            .upsert(
+              { id: data.user.id, display_name: null, preferences: {} },
+              { onConflict: "id", ignoreDuplicates: true },
+            );
+
+          if (profileError) throw profileError;
+        }
+
         if (!data.session) {
           setNotice("Konto utworzone. Sprawdź email i potwierdź rejestrację, a następnie się zaloguj.");
           setMode("login");

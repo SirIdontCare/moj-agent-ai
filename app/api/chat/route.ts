@@ -32,7 +32,7 @@ const selectableModels = {
 type ChatModel = keyof typeof selectableModels;
 
 type UserProfile = {
-  name: string | null;
+  display_name: string | null;
   preferences: Record<string, string> | null;
 };
 
@@ -61,7 +61,7 @@ function extractUserName(text: string) {
   return introduction?.[1] ? normalizeName(introduction[1]) : "";
 }
 
-async function saveUserName(supabase: SupabaseClient, userId: string, name: string) {
+async function updateUserName(supabase: SupabaseClient, userId: string, name: string) {
   if (!isUuid(userId)) {
     return { error: "Brakuje identyfikatora użytkownika — nie mogę zapisać imienia." };
   }
@@ -69,13 +69,13 @@ async function saveUserName(supabase: SupabaseClient, userId: string, name: stri
   const savedName = normalizeName(name);
   const { error } = await supabase
     .from("user_profiles")
-    .upsert({ id: userId, name: savedName }, { onConflict: "id" });
+    .upsert({ id: userId, display_name: savedName }, { onConflict: "id" });
 
   if (error) {
     return { error: "Nie udało się zapisać imienia użytkownika." };
   }
 
-  return { success: true, name: savedName };
+  return { success: true, display_name: savedName };
 }
 
 function normalizePreferences(value: unknown) {
@@ -92,42 +92,44 @@ function normalizePreferences(value: unknown) {
 
 async function getPersonalizationPrompt(supabase: SupabaseClient, userId: string) {
   if (!isUuid(userId)) {
-    return "To nowy użytkownik. Na początku pierwszej rozmowy przywitaj się i zapytaj, jak ma na imię. Gdy je poda, użyj narzędzia saveUserName, żeby je zapamiętać.";
+    return "Jesteś pomocnym asystentem AI.\nRozmawiasz z użytkownikiem: nieznany.\nJeśli nie znasz imienia użytkownika — zapytaj grzecznie na początku rozmowy. Gdy je poda, użyj narzędzia updateUserName, żeby je zapamiętać.";
   }
 
   const { data, error } = await supabase
     .from("user_profiles")
-    .select("name, preferences")
+    .select("display_name, preferences")
     .eq("id", userId)
     .maybeSingle();
 
-  if (error || !data || !(data as UserProfile).name?.trim()) {
-    return "To nowy użytkownik. Na początku pierwszej rozmowy przywitaj się i zapytaj, jak ma na imię. Gdy je poda, użyj narzędzia saveUserName, żeby je zapamiętać.";
-  }
-
-  const profile = data as UserProfile;
-  const name = normalizeName(profile.name ?? "");
-  const preferences = normalizePreferences(profile.preferences);
+  const profile = !error && data ? (data as UserProfile) : null;
+  const displayName = normalizeName(profile?.display_name ?? "");
+  const preferences = normalizePreferences(profile?.preferences);
   const preferenceSummary = Object.entries(preferences)
     .map(([key, value]) => `${key}: ${value}`)
     .join(", ");
 
-  return `Użytkownik ma na imię ${name}. Zwracaj się do niego po imieniu. Bądź ciepły i personalny — to Twój stały użytkownik.${
+  return `Jesteś pomocnym asystentem AI.
+Rozmawiasz z użytkownikiem: ${displayName || "nieznany"}.
+Jeśli nie znasz imienia użytkownika — zapytaj grzecznie na początku rozmowy i użyj narzędzia updateUserName, gdy je poda.${
+    displayName
+      ? ` Zwracaj się do użytkownika po imieniu i witaj go słowami „Cześć, ${displayName}!” na początku nowej rozmowy.`
+      : ""
+  }${
     preferenceSummary ? ` Zapisane preferencje: ${preferenceSummary}. Wykorzystuj je tylko wtedy, gdy są istotne dla odpowiedzi.` : ""
   }`;
 }
 
-function createSaveUserNameTool(supabase: SupabaseClient, userId: string) {
+function createUpdateUserNameTool(supabase: SupabaseClient, userId: string) {
   return tool({
     description:
-      "Zapisuje imię użytkownika. Użyj automatycznie, gdy użytkownik poda swoje imię lub nazwie się w rozmowie.",
+      "Zapisuje imię zalogowanego użytkownika w jego profilu. Użyj automatycznie, gdy użytkownik poda swoje imię lub przedstawi się w rozmowie. Po zapisie odpowiedz: „Miło Cię poznać, [imię]! Zapamiętam.”",
     inputSchema: zodSchema(
       z.object({
         name: z.string().trim().min(1).max(80).describe("Imię użytkownika"),
       }),
     ),
     execute: async ({ name }) => {
-      return saveUserName(supabase, userId, name);
+      return updateUserName(supabase, userId, name);
     },
   });
 }
@@ -685,12 +687,16 @@ export async function POST(request: Request) {
   const detectedName = extractUserName(lastUserText);
 
   if (detectedName) {
-    await saveUserName(supabase, userId, detectedName);
+    await updateUserName(supabase, userId, detectedName);
   }
 
-  const personalizationPrompt = await getPersonalizationPrompt(supabase, userId);
+  const personalizationPrompt = `${await getPersonalizationPrompt(supabase, userId)}${
+    detectedName
+      ? `\nUżytkownik właśnie przedstawił się jako ${detectedName}. Rozpocznij odpowiedź dokładnie od: „Miło Cię poznać, ${detectedName}! Zapamiętam.”`
+      : ""
+  }`;
   const personalizationTools = {
-    saveUserName: createSaveUserNameTool(supabase, userId),
+    updateUserName: createUpdateUserNameTool(supabase, userId),
     saveUserPreference: createSaveUserPreferenceTool(supabase, userId),
   };
   const chatTools = {

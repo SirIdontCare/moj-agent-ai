@@ -96,7 +96,7 @@ type StoredMessage = {
 
 type UserProfile = {
   id: string;
-  name: string | null;
+  display_name: string | null;
   preferences: Record<string, string> | null;
 };
 
@@ -841,7 +841,7 @@ export default function ChatClient({
         userIdRef.current = userId;
         const { data, error: profileLoadError } = await supabase
           .from("user_profiles")
-          .select("id, name, preferences")
+          .select("id, display_name, preferences")
           .eq("id", userId)
           .maybeSingle();
 
@@ -855,7 +855,7 @@ export default function ChatClient({
           const { data: createdProfile, error: createProfileError } = await supabase
             .from("user_profiles")
             .upsert({ id: userId }, { onConflict: "id" })
-            .select("id, name, preferences")
+            .select("id, display_name, preferences")
             .single();
 
           if (createProfileError) {
@@ -1064,8 +1064,8 @@ export default function ChatClient({
 
     const { data, error: saveError } = await supabase
       .from("user_profiles")
-      .upsert({ id: userId, name }, { onConflict: "id" })
-      .select("id, name, preferences")
+      .upsert({ id: userId, display_name: name }, { onConflict: "id" })
+      .select("id, display_name, preferences")
       .single();
 
     if (saveError) {
@@ -1358,8 +1358,8 @@ export default function ChatClient({
               </div>
             </div>
           ) : null}
-          {profile?.name ? (
-            <p className="profile-greeting">👋 Cześć, {profile.name}! Miło Cię znowu widzieć.</p>
+          {profile?.display_name ? (
+            <p className="profile-greeting">👋 Cześć, {profile.display_name}! Miło Cię znowu widzieć.</p>
           ) : null}
           {exampleQuestions.length > 0 ? (
             <div className="example-questions" aria-label="Przykładowe pytania">
@@ -1465,8 +1465,8 @@ export default function ChatClient({
             ) : (
               <div className="empty-state">
                 <p>
-                  {profile?.name
-                    ? `Cześć, ${profile.name}! W czym mogę Ci dziś pomóc?`
+                  {profile?.display_name
+                    ? `Cześć, ${profile.display_name}! W czym mogę Ci dziś pomóc?`
                     : profile
                       ? "Cześć! Nie znamy się jeszcze. Jak masz na imię?"
                       : emptyMessage}

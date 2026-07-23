@@ -1545,6 +1545,388 @@ textarea {
   height: 28px;
 }
 
+/* Competitor analysis */
+.competitor-shell {
+  min-height: 100vh;
+  padding: 28px 28px 56px 268px;
+}
+
+.competitor-panel {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+
+.competitor-hero,
+.competitor-form-card,
+.competitor-result,
+.competitor-api-error {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(16, 16, 22, 0.94);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.26);
+}
+
+.competitor-hero {
+  min-height: 176px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  overflow: hidden;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 88% 14%, rgba(251, 146, 60, 0.23), transparent 23rem),
+    linear-gradient(135deg, rgba(78, 42, 29, 0.94), rgba(72, 42, 66, 0.86)),
+    rgba(16, 16, 22, 0.94);
+}
+
+.competitor-hero p {
+  margin: 0 0 9px;
+  color: #fdba74;
+  font-size: 0.73rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.competitor-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  letter-spacing: -0.045em;
+}
+
+.competitor-hero span {
+  display: block;
+  margin-top: 9px;
+  color: #e5d3cf;
+  font-size: 1.02rem;
+}
+
+.competitor-hero-visual {
+  width: 154px;
+  height: 92px;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.competitor-hero-visual::before,
+.competitor-hero-visual::after {
+  content: "";
+  position: absolute;
+  inset: 45px 20px auto;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.competitor-hero-visual::after {
+  inset: 45px 50% auto auto;
+  width: 1px;
+  height: 36px;
+}
+
+.competitor-hero-visual i {
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-style: normal;
+  font-weight: 950;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+}
+
+.competitor-hero-visual i:nth-child(1) { inset: 0 auto auto 53px; }
+.competitor-hero-visual i:nth-child(2) { inset: 44px auto auto 0; }
+.competitor-hero-visual i:nth-child(3) { inset: 44px 0 auto auto; }
+
+.competitor-form-card {
+  display: grid;
+  gap: 22px;
+  padding: 26px;
+}
+
+.competitor-form-card form {
+  display: grid;
+  gap: 18px;
+}
+
+.competitor-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.competitor-inputs label,
+.competitor-context {
+  display: grid;
+  gap: 8px;
+  color: #f0edf0;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.competitor-context > span {
+  margin-left: 4px;
+  color: #777887;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.competitor-inputs input,
+.competitor-context textarea {
+  width: 100%;
+  border: 1px solid #393641;
+  border-radius: 9px;
+  outline: 0;
+  background: #0c0d13;
+  color: #f5f3f5;
+  line-height: 1.5;
+  padding: 12px 13px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.competitor-inputs input {
+  min-height: 48px;
+}
+
+.competitor-context textarea {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.competitor-inputs input:focus,
+.competitor-context textarea:focus {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.12);
+}
+
+.competitor-inputs input:disabled,
+.competitor-context textarea:disabled {
+  opacity: 0.65;
+}
+
+.competitor-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.competitor-tool-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.competitor-tool-pills span {
+  border: 1px solid #383541;
+  border-radius: 999px;
+  background: #13141b;
+  color: #aaa6b0;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 6px 9px;
+}
+
+.competitor-submit-row > button {
+  min-width: 176px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #fb923c, #e16638);
+  color: #211006;
+  cursor: pointer;
+  font-weight: 950;
+  padding: 0 18px;
+  box-shadow: 0 12px 28px rgba(225, 102, 56, 0.2);
+}
+
+.competitor-submit-row > button:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.competitor-submit-row > button:disabled,
+.competitor-examples button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.competitor-examples {
+  display: grid;
+  gap: 9px;
+  border-top: 1px solid #2b2931;
+  padding-top: 18px;
+}
+
+.competitor-examples > strong {
+  color: #96929d;
+  font-size: 0.73rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.competitor-examples > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.competitor-examples button {
+  min-height: 42px;
+  border: 1px solid #37343f;
+  border-radius: 8px;
+  background: #15151d;
+  color: #d8d4dc;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 750;
+  padding: 8px 11px;
+  text-align: left;
+}
+
+.competitor-examples button:hover:not(:disabled) {
+  border-color: #a6613d;
+  background: #281b17;
+  color: #fff;
+}
+
+.competitor-error {
+  margin: 0;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.18);
+  color: #fca5a5;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.competitor-api-error {
+  border-color: rgba(248, 113, 113, 0.35);
+  border-radius: 12px;
+  padding: 13px 15px;
+}
+
+.competitor-result {
+  overflow: hidden;
+}
+
+.competitor-result-toolbar {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #2c2931;
+  background: #101117;
+  padding: 13px 22px;
+}
+
+.competitor-result-toolbar > div {
+  display: grid;
+  gap: 3px;
+}
+
+.competitor-result-toolbar span {
+  color: #fb923c;
+  font-size: 0.69rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.competitor-result-toolbar strong {
+  color: #c6c2cb;
+  font-size: 0.84rem;
+}
+
+.competitor-result-toolbar button {
+  min-height: 40px;
+  border: 1px solid #74452e;
+  border-radius: 8px;
+  background: #2e1d16;
+  color: #fed7aa;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0 13px;
+}
+
+.competitor-result-toolbar button:hover {
+  border-color: #fb923c;
+  background: #44271b;
+}
+
+.competitor-document {
+  padding: clamp(24px, 5vw, 48px);
+  background: #12131a;
+}
+
+.competitor-loading {
+  min-height: 380px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: #e1dee4;
+  text-align: center;
+  padding: 38px;
+}
+
+.competitor-loading p {
+  max-width: 480px;
+  margin: 0;
+  color: #94909b;
+  line-height: 1.5;
+}
+
+.competitor-scan {
+  width: 82px;
+  height: 62px;
+  position: relative;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.competitor-scan::before,
+.competitor-scan::after {
+  content: "";
+  position: absolute;
+}
+
+.competitor-scan::before {
+  inset: 8px 10px;
+  border: 2px solid #815034;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 9px rgba(251, 146, 60, 0.09),
+    0 0 0 18px rgba(251, 146, 60, 0.04);
+  animation: competitor-pulse 1.6s ease-in-out infinite;
+}
+
+.competitor-scan::after {
+  width: 9px;
+  height: 9px;
+  inset: 50% auto auto 50%;
+  border-radius: 50%;
+  background: #fb923c;
+  box-shadow: -24px 9px #fdba74, 24px 9px #f97316;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes competitor-pulse {
+  50% { transform: scale(1.1); opacity: 0.68; }
+}
+
 .chat-shell {
   min-height: 100vh;
   display: flex;
@@ -4198,7 +4580,8 @@ textarea {
   .knowledge-shell,
   .email-triage-shell,
   .report-shell,
-  .saved-reports-shell {
+  .saved-reports-shell,
+  .competitor-shell {
     padding: 64px 0 0;
   }
 
@@ -4431,6 +4814,52 @@ textarea {
   }
 
   .saved-report-document {
+    padding: 22px 18px;
+  }
+
+  .competitor-panel {
+    width: 100%;
+    padding: 0 16px 28px;
+  }
+
+  .competitor-hero {
+    min-height: 0;
+    padding: 22px 20px;
+  }
+
+  .competitor-hero-visual {
+    display: none;
+  }
+
+  .competitor-form-card {
+    padding: 18px;
+  }
+
+  .competitor-inputs,
+  .competitor-examples > div {
+    grid-template-columns: 1fr;
+  }
+
+  .competitor-submit-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .competitor-submit-row > button {
+    width: 100%;
+  }
+
+  .competitor-result-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 15px 16px;
+  }
+
+  .competitor-result-toolbar button {
+    min-height: 44px;
+  }
+
+  .competitor-document {
     padding: 22px 18px;
   }
 

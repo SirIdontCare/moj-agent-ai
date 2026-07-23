@@ -136,21 +136,14 @@ export async function POST(request: Request) {
     stopWhen: isStepCount(8),
     toolChoice: "auto",
     tools,
-    prepareStep: ({ stepNumber }) =>
-      searchGroundingEnabled && stepNumber === 0
-        ? {
-            toolChoice: {
-              type: "tool" as const,
-              toolName: "google_search" as keyof typeof tools,
-            },
-          }
-        : undefined,
   });
 
   return result.toUIMessageStreamResponse({
     sendSources: true,
     onError: (error) => {
       const message = error instanceof Error ? error.message : String(error);
+
+      console.error("[api/report] Gemini stream error:", message);
 
       if (message.includes("quota") || message.includes("RESOURCE_EXHAUSTED")) {
         return "Limit API Gemini został chwilowo wyczerpany. Spróbuj ponownie później.";

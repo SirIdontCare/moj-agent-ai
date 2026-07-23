@@ -27,6 +27,18 @@ create table if not exists public.user_profiles (
   preferences jsonb not null default '{}'::jsonb
 );
 
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  topic text not null,
+  title text not null,
+  content text not null,
+  sources jsonb not null default '[]'::jsonb,
+  word_count integer not null default 0 check (word_count >= 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -71,11 +83,14 @@ create index if not exists messages_conversation_created_idx
   on public.messages (conversation_id, created_at);
 create index if not exists messages_user_created_idx
   on public.messages (user_id, created_at);
+create index if not exists reports_user_created_idx
+  on public.reports (user_id, created_at desc);
 
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 alter table public.user_profiles enable row level security;
 alter table public.documents enable row level security;
+alter table public.reports enable row level security;
 
 drop policy if exists "Users manage their conversations" on public.conversations;
 create policy "Users manage their conversations"
@@ -124,6 +139,17 @@ create policy "Users manage their documents"
   to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users manage their reports" on public.reports;
+create policy "Users manage their reports"
+  on public.reports
+  for all
+  to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+revoke all on table public.reports from anon;
+grant select, insert, update, delete on table public.reports to authenticated;
 
 create or replace function public.match_documents(
   query_embedding vector(768),

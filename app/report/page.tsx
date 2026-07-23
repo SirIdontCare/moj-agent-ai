@@ -221,6 +221,10 @@ function ReportMarkdown({ text }: { text: string }) {
 export default function ReportPage() {
   const [topic, setTopic] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [saveError, setSaveError] = useState("");
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transport = useMemo(
     () =>
@@ -240,6 +244,14 @@ export default function ReportPage() {
   );
   const report = reportMessage ? getMessageText(reportMessage) : "";
   const sources = reportMessage ? getMessageSources(reportMessage) : [];
+  const reportTopic =
+    [...messages]
+      .reverse()
+      .find((message) => message.role === "user")
+      ?.parts.filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("")
+      .trim() ?? topic.trim();
   const wordCount = report.trim() ? report.trim().split(/\s+/).length : 0;
 
   async function generateReport(event: FormEvent<HTMLFormElement>) {
@@ -249,6 +261,8 @@ export default function ReportPage() {
     if (!trimmedTopic || isGenerating) return;
 
     setCopyStatus("");
+    setSaveStatus("idle");
+    setSaveError("");
     setMessages([]);
     await sendMessage({ text: trimmedTopic });
   }
@@ -264,6 +278,48 @@ export default function ReportPage() {
       copyTimerRef.current = setTimeout(() => setCopyStatus(""), 1800);
     } catch {
       setCopyStatus("Nie udało się skopiować");
+    }
+  }
+
+  async function saveReport() {
+    if (!report || !reportTopic || isGenerating || saveStatus === "saving") return;
+
+    setSaveStatus("saving");
+    setSaveError("");
+
+    try {
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          ...authHeaders,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topic: reportTopic,
+          content: report,
+          sources: sources.map((source) => ({
+            title: source.title,
+            url: source.url,
+          })),
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? "Nie udało się zapisać raportu.");
+      }
+
+      setSaveStatus("saved");
+    } catch (saveReportError) {
+      setSaveStatus("error");
+      setSaveError(
+        saveReportError instanceof Error
+          ? saveReportError.message
+          : "Nie udało się zapisać raportu.",
+      );
     }
   }
 
@@ -350,11 +406,31 @@ export default function ReportPage() {
                 </strong>
               </div>
               {report && !isGenerating ? (
-                <button onClick={() => void copyReport()} type="button">
-                  {copyStatus || "📋 Kopiuj do schowka"}
-                </button>
+                <div className="report-result-actions">
+                  <button onClick={() => void copyReport()} type="button">
+                    {copyStatus || "📋 Kopiuj do schowka"}
+                  </button>
+                  <button
+                    className="report-save-button"
+                    disabled={saveStatus === "saving" || saveStatus === "saved"}
+                    onClick={() => void saveReport()}
+                    type="button"
+                  >
+                    {saveStatus === "saving"
+                      ? "Zapisywanie…"
+                      : saveStatus === "saved"
+                        ? "✓ Zapisano w bazie"
+                        : "💾 Zapisz w bazie"}
+                  </button>
+                </div>
               ) : null}
             </header>
+
+            {saveError ? (
+              <p className="report-save-error" role="alert">
+                {saveError}
+              </p>
+            ) : null}
 
             {report ? (
               <article className="report-document">

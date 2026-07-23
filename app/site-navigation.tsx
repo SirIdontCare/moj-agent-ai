@@ -11,6 +11,7 @@ const navigationItems = [
   { href: "/report", label: "Raporty", emoji: "📊" },
   { href: "/reports", label: "Zapisane raporty", emoji: "🗂️" },
   { href: "/competitor", label: "Konkurencja", emoji: "🏢" },
+  { href: "/meal-planner", label: "Posiłki", emoji: "🍽️" },
   { href: "/travel", label: "Podróże", emoji: "✈️" },
   { href: "/react", label: "ReAct", emoji: "🔄" },
   { href: "/agent", label: "Agent", emoji: "🤖" },

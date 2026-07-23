@@ -46,6 +46,65 @@ function getReportTitle(topic: string, content: string) {
   return (heading || topic).slice(0, 300);
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
+function reportsDatabaseError(error: { code?: string }) {
+  const missingTable = error.code === "42P01" || error.code === "PGRST205";
+
+  return missingTable
+    ? "Tabela raportów nie jest jeszcze dostępna. Zastosuj migrację Supabase 20260723_reports.sql."
+    : "Nie udało się pobrać raportów z bazy.";
+}
+
+export async function GET(request: Request) {
+  const auth = await authenticateRequest(request);
+  if (!auth) return unauthorizedResponse();
+
+  const reportId = new URL(request.url).searchParams.get("id")?.trim();
+
+  if (reportId) {
+    if (!isUuid(reportId)) {
+      return Response.json({ error: "Nieprawidłowy identyfikator raportu." }, { status: 400 });
+    }
+
+    const { data, error } = await auth.supabase
+      .from("reports")
+      .select("id, topic, title, content, sources, word_count, created_at, updated_at")
+      .eq("id", reportId)
+      .single();
+
+    if (error) {
+      return Response.json(
+        {
+          error:
+            error.code === "PGRST116"
+              ? "Nie znaleziono raportu."
+              : reportsDatabaseError(error),
+        },
+        { status: error.code === "PGRST116" ? 404 : 500 },
+      );
+    }
+
+    return Response.json({ report: data });
+  }
+
+  const { data, error } = await auth.supabase
+    .from("reports")
+    .select("id, topic, title, word_count, created_at, updated_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    return Response.json({ error: reportsDatabaseError(error) }, { status: 500 });
+  }
+
+  return Response.json({ reports: data ?? [] });
+}
+
 export async function POST(request: Request) {
   const auth = await authenticateRequest(request);
   if (!auth) return unauthorizedResponse();

@@ -9,6 +9,7 @@ const navigationItems = [
   { href: "/", label: "Dashboard", emoji: "🏠" },
   { href: "/email-triage", label: "E-mail Triage", emoji: "📧" },
   { href: "/report", label: "Raporty", emoji: "📊" },
+  { href: "/reports", label: "Zapisane raporty", emoji: "🗂️" },
   { href: "/travel", label: "Podróże", emoji: "✈️" },
   { href: "/react", label: "ReAct", emoji: "🔄" },
   { href: "/agent", label: "Agent", emoji: "🤖" },

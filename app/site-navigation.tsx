@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 
 const navigationItems = [
   { href: "/", label: "Dashboard", emoji: "🏠" },
+  { href: "/email-triage", label: "E-mail Triage", emoji: "📧" },
   { href: "/travel", label: "Podróże", emoji: "✈️" },
   { href: "/react", label: "ReAct", emoji: "🔄" },
   { href: "/agent", label: "Agent", emoji: "🤖" },

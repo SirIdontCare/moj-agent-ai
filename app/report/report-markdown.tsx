@@ -1,11 +1,15 @@
 import type { ReactNode } from "react";
 
 function renderInlineMarkdown(text: string): ReactNode[] {
-  const pattern = /(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g;
+  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g;
 
   return text.split(pattern).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={index}>{part.slice(1, -1)}</em>;
     }
 
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);

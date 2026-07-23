@@ -517,36 +517,75 @@
 }
 
 .meal-document {
-  background: #f8faf8;
-  color: #202923;
+  background:
+    linear-gradient(rgba(118, 214, 159, 0.018) 1px, transparent 1px),
+    #0c1511;
+  background-size: 100% 32px;
+  color: #cbd8d0;
   padding: clamp(22px, 5vw, 52px);
+}
+
+.meal-document .report-markdown {
+  color: #cbd8d0;
 }
 
 .meal-document .report-markdown h1,
 .meal-document .report-markdown h2,
 .meal-document .report-markdown h3 {
-  color: #173a27;
+  color: #effaf3;
 }
 
 .meal-document .report-markdown h2 {
-  border-bottom-color: #d8e4db;
+  border-bottom-color: #293c32;
+}
+
+.meal-document .report-markdown h3 {
+  color: #c6f0d6;
+}
+
+.meal-document .report-markdown > p:nth-child(2),
+.meal-document .report-markdown > p:nth-child(3) {
+  color: #8fa198;
+}
+
+.meal-document .report-markdown strong {
+  color: #e9f7ee;
+}
+
+.meal-document .report-markdown a {
+  color: #78dca2;
+  text-decoration-color: rgba(120, 220, 162, 0.42);
+}
+
+.meal-document .report-markdown blockquote {
+  border-left-color: #46b978;
+  background: rgba(38, 117, 72, 0.14);
+  color: #c9ead5;
 }
 
 .meal-document .report-table-wrap {
-  border-color: #d5e2d9;
+  border-color: #30443a;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+.meal-document .report-table-wrap table {
+  background: #0b120f;
 }
 
 .meal-document .report-markdown th {
-  background: #e6f2e9;
-  color: #174129;
+  border-bottom-color: #365345;
+  background: #173125;
+  color: #dff7e8;
 }
 
 .meal-document .report-markdown td {
-  border-color: #dce7df;
+  border-color: #26382f;
+  background: #0d1712;
+  color: #cbd8d0;
 }
 
 .meal-document .report-markdown tr:nth-child(even) td {
-  background: #f0f6f2;
+  background: #111e17;
 }
 
 .meal-loading {

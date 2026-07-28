@@ -216,26 +216,94 @@ export const calculatorTool = tool({
   },
 });
 
+export function getCurrentDateTime(now = new Date()) {
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Europe/Warsaw",
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    dateParts.find((item) => item.type === type)?.value ?? "";
+
+  return {
+    date: `${part("year")}-${part("month")}-${part("day")}`,
+    dateTime: now.toLocaleString("pl-PL", {
+      dateStyle: "full",
+      timeStyle: "medium",
+      timeZone: "Europe/Warsaw",
+    }),
+    dayOfWeek: now.toLocaleDateString("pl-PL", {
+      weekday: "long",
+      timeZone: "Europe/Warsaw",
+    }),
+    timestamp: now.toISOString(),
+  };
+}
+
 export const currentDateTimeTool = tool({
   description: "Zwraca aktualną datę i czas.",
   inputSchema: zodSchema(z.object({})),
-  execute: async () => {
-    const now = new Date();
+  execute: async () => getCurrentDateTime(),
+});
+
+export async function getWeather(city: string) {
+  const normalizedCity = city.trim();
+
+  if (!normalizedCity) {
+    return { error: "Podaj nazwę miasta" };
+  }
+
+  try {
+    const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(normalizedCity)}&count=1&language=pl`;
+    const geocodingResponse = await fetchWithTimeout(geocodingUrl);
+
+    if (!geocodingResponse.ok) {
+      return { error: `API zwróciło błąd ${geocodingResponse.status}. Sprawdź parametry.` };
+    }
+
+    const geocoding = (await geocodingResponse.json()) as {
+      results?: Array<{ latitude: number; longitude: number; name: string; country?: string }>;
+    };
+    const location = geocoding.results?.[0];
+
+    if (!location) {
+      return { error: `Nie znalazłem miasta ${normalizedCity}. Sprawdź pisownię.` };
+    }
+
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`;
+    const weatherResponse = await fetchWithTimeout(weatherUrl);
+
+    if (!weatherResponse.ok) {
+      return { error: `API zwróciło błąd ${weatherResponse.status}. Sprawdź parametry.` };
+    }
+
+    const weather = (await weatherResponse.json()) as {
+      current?: {
+        temperature_2m?: number;
+        relative_humidity_2m?: number;
+        wind_speed_10m?: number;
+        weather_code?: number;
+      };
+    };
+    const current = weather.current;
+
+    if (!current) {
+      return { error: `Brak aktualnych danych pogodowych dla miasta ${location.name}.` };
+    }
 
     return {
-      dateTime: now.toLocaleString("pl-PL", {
-        dateStyle: "full",
-        timeStyle: "medium",
-        timeZone: "Europe/Warsaw",
-      }),
-      dayOfWeek: now.toLocaleDateString("pl-PL", {
-        weekday: "long",
-        timeZone: "Europe/Warsaw",
-      }),
-      timestamp: now.toISOString(),
+      city: location.name,
+      temperature: current.temperature_2m,
+      humidity: current.relative_humidity_2m,
+      windSpeed: current.wind_speed_10m,
+      description: weatherCodeToDescription(current.weather_code ?? -1),
+      source: "Open-Meteo",
     };
-  },
-});
+  } catch (error) {
+    return { error: getFetchErrorMessage(error) };
+  }
+}
 
 export const getWeatherTool = tool({
   description: "Sprawdza aktualną pogodę w podanym mieście.",
@@ -244,64 +312,49 @@ export const getWeatherTool = tool({
       city: z.string().describe("Nazwa miasta, np. Warszawa albo Kraków"),
     }),
   ),
-  execute: async ({ city }) => {
-    const normalizedCity = city.trim();
-
-    if (!normalizedCity) {
-      return { error: "Podaj nazwę miasta" };
-    }
-
-    try {
-      const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(normalizedCity)}&count=1&language=pl`;
-      const geocodingResponse = await fetchWithTimeout(geocodingUrl);
-
-      if (!geocodingResponse.ok) {
-        return { error: `API zwróciło błąd ${geocodingResponse.status}. Sprawdź parametry.` };
-      }
-
-      const geocoding = (await geocodingResponse.json()) as {
-        results?: Array<{ latitude: number; longitude: number; name: string; country?: string }>;
-      };
-      const location = geocoding.results?.[0];
-
-      if (!location) {
-        return { error: `Nie znalazłem miasta ${normalizedCity}. Sprawdź pisownię.` };
-      }
-
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`;
-      const weatherResponse = await fetchWithTimeout(weatherUrl);
-
-      if (!weatherResponse.ok) {
-        return { error: `API zwróciło błąd ${weatherResponse.status}. Sprawdź parametry.` };
-      }
-
-      const weather = (await weatherResponse.json()) as {
-        current?: {
-          temperature_2m?: number;
-          relative_humidity_2m?: number;
-          wind_speed_10m?: number;
-          weather_code?: number;
-        };
-      };
-      const current = weather.current;
-
-      if (!current) {
-        return { error: `Brak aktualnych danych pogodowych dla miasta ${location.name}.` };
-      }
-
-      return {
-        city: location.name,
-        temperature: current.temperature_2m,
-        humidity: current.relative_humidity_2m,
-        windSpeed: current.wind_speed_10m,
-        description: weatherCodeToDescription(current.weather_code ?? -1),
-        source: "Open-Meteo",
-      };
-    } catch (error) {
-      return { error: getFetchErrorMessage(error) };
-    }
-  },
+  execute: async ({ city }) => getWeather(city),
 });
+
+export async function getExchangeRate(currency: string) {
+  const code = currency.trim().toUpperCase();
+
+  if (!/^[A-Z]{3}$/.test(code)) {
+    return { error: "Podaj 3-literowy kod waluty (np. EUR, USD)" };
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `https://api.nbp.pl/api/exchangerates/rates/a/${code}/?format=json`,
+    );
+
+    if (response.status === 404) {
+      return { error: `Waluta ${code} nie jest w tabeli NBP. Popularne: EUR, USD, GBP, CHF` };
+    }
+
+    if (!response.ok) {
+      return { error: `API zwróciło błąd ${response.status}. Sprawdź parametry.` };
+    }
+
+    const data = (await response.json()) as {
+      code: string;
+      rates?: Array<{ mid: number; effectiveDate: string }>;
+    };
+    const rate = data.rates?.[0];
+
+    if (!rate) {
+      return { error: `Brak kursu ${code} w odpowiedzi NBP.` };
+    }
+
+    return {
+      currency: data.code,
+      rate: rate.mid,
+      date: rate.effectiveDate,
+      source: "NBP",
+    };
+  } catch (error) {
+    return { error: getFetchErrorMessage(error) };
+  }
+}
 
 export const getExchangeRateTool = tool({
   description: "Sprawdza kurs waluty do PLN z NBP.",
@@ -310,44 +363,7 @@ export const getExchangeRateTool = tool({
       currency: z.string().describe("Kod waluty, np. EUR, USD, GBP albo CHF"),
     }),
   ),
-  execute: async ({ currency }) => {
-    const code = currency.trim().toUpperCase();
-
-    if (!/^[A-Z]{3}$/.test(code)) {
-      return { error: "Podaj 3-literowy kod waluty (np. EUR, USD)" };
-    }
-
-    try {
-      const response = await fetchWithTimeout(`https://api.nbp.pl/api/exchangerates/rates/a/${code}/?format=json`);
-
-      if (response.status === 404) {
-        return { error: `Waluta ${code} nie jest w tabeli NBP. Popularne: EUR, USD, GBP, CHF` };
-      }
-
-      if (!response.ok) {
-        return { error: `API zwróciło błąd ${response.status}. Sprawdź parametry.` };
-      }
-
-      const data = (await response.json()) as {
-        code: string;
-        rates?: Array<{ mid: number; effectiveDate: string }>;
-      };
-      const rate = data.rates?.[0];
-
-      if (!rate) {
-        return { error: `Brak kursu ${code} w odpowiedzi NBP.` };
-      }
-
-      return {
-        currency: data.code,
-        rate: rate.mid,
-        date: rate.effectiveDate,
-        source: "NBP",
-      };
-    } catch (error) {
-      return { error: getFetchErrorMessage(error) };
-    }
-  },
+  execute: async ({ currency }) => getExchangeRate(currency),
 });
 
 export const getHolidaysTool = tool({

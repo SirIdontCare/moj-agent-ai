@@ -39,6 +39,14 @@ create table if not exists public.reports (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.briefings (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  content text not null,
+  date date not null unique,
+  user_id uuid references auth.users(id) on delete cascade
+);
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -85,12 +93,15 @@ create index if not exists messages_user_created_idx
   on public.messages (user_id, created_at);
 create index if not exists reports_user_created_idx
   on public.reports (user_id, created_at desc);
+create index if not exists briefings_created_at_idx
+  on public.briefings (created_at desc);
 
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 alter table public.user_profiles enable row level security;
 alter table public.documents enable row level security;
 alter table public.reports enable row level security;
+alter table public.briefings enable row level security;
 
 drop policy if exists "Users manage their conversations" on public.conversations;
 create policy "Users manage their conversations"
@@ -150,6 +161,9 @@ create policy "Users manage their reports"
 
 revoke all on table public.reports from anon;
 grant select, insert, update, delete on table public.reports to authenticated;
+
+revoke all on table public.briefings from anon, authenticated;
+grant select, insert, update on table public.briefings to service_role;
 
 create or replace function public.match_documents(
   query_embedding vector(768),

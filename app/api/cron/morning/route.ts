@@ -7,10 +7,14 @@ export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 function isAuthorized(request: Request) {
+  if (process.env.NODE_ENV !== "production") {
+    return true;
+  }
+
   const cronSecret = process.env.CRON_SECRET?.trim();
 
   if (!cronSecret) {
-    return process.env.NODE_ENV !== "production";
+    return false;
   }
 
   return request.headers.get("authorization") === `Bearer ${cronSecret}`;

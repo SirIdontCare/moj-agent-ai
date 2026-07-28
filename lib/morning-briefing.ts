@@ -180,7 +180,9 @@ export async function generateMorningBriefing() {
   };
 }
 
-export async function saveMorningBriefing(date: string, content: string) {
+// Tabela briefings jest dostępna wyłącznie dla roli service_role — zobacz migrację
+// 20260728_briefings.sql. Każdy odczyt i zapis musi iść przez ten klient.
+function getServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -190,13 +192,76 @@ export async function saveMorningBriefing(date: string, content: string) {
     );
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
-  const { data, error } = await supabase
+}
+
+function briefingsDatabaseError(
+  error: { code?: string; message: string },
+  fallback: string,
+) {
+  const missingTable = error.code === "42P01" || error.code === "PGRST205";
+
+  return missingTable
+    ? "Tabela briefings nie istnieje. Zastosuj migrację 20260728_briefings.sql."
+    : `${fallback}: ${error.message}`;
+}
+
+export function getBriefingPreview(content: string, length = 150) {
+  const plain = content
+    .replace(/^#+\s*/gm, "")
+    .replace(/[*_>`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return plain.length > length ? `${plain.slice(0, length).trimEnd()}…` : plain;
+}
+
+export async function listBriefings(limit = 30) {
+  const { data, error } = await getServiceClient()
+    .from("briefings")
+    .select("id, date, created_at, content")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(
+      briefingsDatabaseError(error, "Nie udało się pobrać briefingów"),
+    );
+  }
+
+  return (data ?? []).map(({ content, ...briefing }) => ({
+    ...briefing,
+    preview: getBriefingPreview(content),
+  }));
+}
+
+export async function getBriefing(id: string) {
+  const { data, error } = await getServiceClient()
+    .from("briefings")
+    .select("id, date, created_at, content")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+
+    throw new Error(
+      briefingsDatabaseError(error, "Nie udało się otworzyć briefingu"),
+    );
+  }
+
+  return data;
+}
+
+export async function saveMorningBriefing(date: string, content: string) {
+  const { data, error } = await getServiceClient()
     .from("briefings")
     .upsert(
       {
@@ -209,11 +274,8 @@ export async function saveMorningBriefing(date: string, content: string) {
     .single();
 
   if (error) {
-    const missingTable = error.code === "42P01" || error.code === "PGRST205";
     throw new Error(
-      missingTable
-        ? "Tabela briefings nie istnieje. Zastosuj migrację 20260728_briefings.sql."
-        : `Nie udało się zapisać briefingu: ${error.message}`,
+      briefingsDatabaseError(error, "Nie udało się zapisać briefingu"),
     );
   }
 

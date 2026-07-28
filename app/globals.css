@@ -2023,7 +2023,8 @@ textarea {
 }
 
 .saved-reports-hero > a,
-.saved-reports-empty-list a {
+.saved-reports-empty-list a,
+.briefings-action {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -2038,9 +2039,33 @@ textarea {
 }
 
 .saved-reports-hero > a:hover,
-.saved-reports-empty-list a:hover {
+.saved-reports-empty-list a:hover,
+.briefings-action:hover:not(:disabled) {
   border-color: #7dd3fc;
   background: #1d465e;
+}
+
+/* Briefings — reszta układu współdzielona z widokiem zapisanych raportów. */
+.briefings-action {
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.briefings-action:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.briefing-item p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  color: #96a0b2;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .saved-reports-error {

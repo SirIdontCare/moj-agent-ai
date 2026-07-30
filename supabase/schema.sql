@@ -262,7 +262,7 @@ declare
   local_day_start timestamp;
   day_start timestamptz;
   day_end timestamptz;
-  daily_limit constant integer := 10000;
+  daily_limit constant integer := 100;
   tokens_used bigint;
 begin
   if current_user_id is null then

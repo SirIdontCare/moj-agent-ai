@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const DAILY_API_TOKEN_LIMIT = 10_000;
+export const DAILY_API_TOKEN_LIMIT = 100;
 
 type DailyApiUsageRpcRow = {
   allowed: boolean;

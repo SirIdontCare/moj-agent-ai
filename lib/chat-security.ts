@@ -25,7 +25,10 @@ const acceptedImageTypes = new Set([
 
 const chatRequestSchema = z
   .object({
+    id: z.string().min(1).max(200).optional(),
     messages: z.unknown(),
+    trigger: z.enum(["submit-message", "regenerate-message"]).optional(),
+    messageId: z.string().min(1).max(200).optional(),
     mode: z
       .enum(["casual", "ekspert", "kreatywny", "search", "vision", "agent"])
       .optional(),

@@ -53,7 +53,12 @@ export type ValidChatRequest = {
 
 export type ChatInputValidationResult =
   | { success: true; data: ValidChatRequest }
-  | { success: false; error: string };
+  | {
+      success: false;
+      error: string;
+      securityEvent?: "prompt_injection" | "system_message";
+      messagePreview?: string;
+    };
 
 function getText(message: UIMessage) {
   return message.parts
@@ -106,6 +111,12 @@ export async function validateChatInput(payload: unknown): Promise<ChatInputVali
     return {
       success: false,
       error: "Wiadomości systemowe nie są przyjmowane od użytkownika.",
+      securityEvent: "system_message",
+      messagePreview: messages
+        .filter((message) => message.role === "system")
+        .map(getText)
+        .join(" ")
+        .slice(0, 500),
     };
   }
 
@@ -174,6 +185,8 @@ export async function validateChatInput(payload: unknown): Promise<ChatInputVali
     return {
       success: false,
       error: "Nie mogę przetworzyć polecenia dotyczącego ujawnienia wewnętrznych instrukcji.",
+      securityEvent: "prompt_injection",
+      messagePreview: lastText.slice(0, 500),
     };
   }
 

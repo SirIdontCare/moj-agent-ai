@@ -25,6 +25,7 @@ import {
   getDailyApiUsage,
   recordApiUsage,
 } from "@/lib/api-usage";
+import { recordSecurityEvent } from "@/lib/security-events";
 import { searchKnowledge } from "@/lib/knowledge";
 import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
@@ -715,6 +716,11 @@ export async function POST(request: Request) {
   const contentLength = Number(request.headers.get("content-length") ?? "0");
 
   if (Number.isFinite(contentLength) && contentLength > MAX_CHAT_REQUEST_BYTES) {
+    await recordSecurityEvent(supabase, {
+      type: "request_too_large",
+      reason: "Nagłówek Content-Length przekroczył limit 6 MB.",
+    });
+
     return Response.json(
       { error: "Żądanie jest za duże. Maksymalny rozmiar to 6 MB." },
       { status: 413 },
@@ -730,6 +736,11 @@ export async function POST(request: Request) {
       requestBody.length > MAX_CHAT_REQUEST_BYTES ||
       new TextEncoder().encode(requestBody).byteLength > MAX_CHAT_REQUEST_BYTES
     ) {
+      await recordSecurityEvent(supabase, {
+        type: "request_too_large",
+        reason: "Treść żądania przekroczyła limit 6 MB.",
+      });
+
       return Response.json(
         { error: "Żądanie jest za duże. Maksymalny rozmiar to 6 MB." },
         { status: 413 },
@@ -738,12 +749,25 @@ export async function POST(request: Request) {
 
     payload = JSON.parse(requestBody);
   } catch {
+    await recordSecurityEvent(supabase, {
+      type: "invalid_payload",
+      reason: "Nieprawidłowy JSON w żądaniu czatu.",
+    });
+
     return Response.json({ error: "Nieprawidłowy JSON." }, { status: 400 });
   }
 
   const inputValidation = await validateChatInput(payload);
 
   if (!inputValidation.success) {
+    if (inputValidation.securityEvent) {
+      await recordSecurityEvent(supabase, {
+        type: inputValidation.securityEvent,
+        reason: inputValidation.error,
+        messagePreview: inputValidation.messagePreview,
+      });
+    }
+
     return Response.json({ error: inputValidation.error }, { status: 400 });
   }
 
@@ -788,6 +812,11 @@ export async function POST(request: Request) {
   };
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent(supabase, {
+      type: "rate_limit",
+      reason: `Przekroczono limit ${CHAT_RATE_LIMIT} wiadomości na godzinę.`,
+    });
+
     const retryAfter = Math.max(
       1,
       Math.ceil((new Date(rateLimit.reset_at).getTime() - Date.now()) / 1000),

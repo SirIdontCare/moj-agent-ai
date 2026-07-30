@@ -20,6 +20,11 @@ import {
   createSystemPromptOutputFilter,
   validateChatInput,
 } from "@/lib/chat-security";
+import {
+  dailyApiUsageHeaders,
+  getDailyApiUsage,
+  recordApiUsage,
+} from "@/lib/api-usage";
 import { searchKnowledge } from "@/lib/knowledge";
 import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
 
@@ -743,6 +748,33 @@ export async function POST(request: Request) {
   }
 
   const { messages, mode, model } = inputValidation.data;
+  const dailyUsageResult = await getDailyApiUsage(supabase);
+
+  if ("error" in dailyUsageResult) {
+    return Response.json({ error: dailyUsageResult.error }, { status: 503 });
+  }
+
+  const dailyUsage = dailyUsageResult.data;
+  const tokenLimitHeaders = dailyApiUsageHeaders(dailyUsage);
+
+  if (!dailyUsage.allowed) {
+    const retryAfter = Math.max(
+      1,
+      Math.ceil((new Date(dailyUsage.resetAt).getTime() - Date.now()) / 1000),
+    );
+
+    return Response.json(
+      { error: "Wróć jutro" },
+      {
+        status: 429,
+        headers: {
+          ...tokenLimitHeaders,
+          "Retry-After": String(retryAfter),
+        },
+      },
+    );
+  }
+
   const rateLimitResult = await consumeChatRateLimit(supabase);
 
   if ("error" in rateLimitResult) {
@@ -750,7 +782,10 @@ export async function POST(request: Request) {
   }
 
   const rateLimit = rateLimitResult.data;
-  const headers = rateLimitHeaders(rateLimit);
+  const headers = {
+    ...rateLimitHeaders(rateLimit),
+    ...tokenLimitHeaders,
+  };
 
   if (!rateLimit.allowed) {
     const retryAfter = Math.max(
@@ -829,6 +864,14 @@ export async function POST(request: Request) {
         ? { toolChoice: { type: "tool", toolName: "searchKnowledge" } }
         : undefined,
     tools: chatTools,
+    onEnd: async ({ usage }) => {
+      await recordApiUsage(
+        supabase,
+        selectableModels[selectedModel],
+        "/api/chat",
+        usage,
+      );
+    },
   });
 
   return result.toUIMessageStreamResponse({

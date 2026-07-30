@@ -137,6 +137,24 @@ function getSupabaseErrorMessage(error: unknown) {
   return "Nie udało się połączyć z historią rozmów.";
 }
 
+function getChatErrorMessage(error: Error | undefined) {
+  if (!error) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(error.message) as { error?: unknown };
+
+    if (typeof parsed.error === "string" && parsed.error) {
+      return parsed.error;
+    }
+  } catch {
+    // Nie pokazuj surowych błędów transportu ani szczegółów serwera.
+  }
+
+  return "Nie udało się pobrać odpowiedzi.";
+}
+
 function getMessageText(message: UIMessage) {
   return message.parts
     .filter((part) => part.type === "text")
@@ -1633,7 +1651,7 @@ export default function ChatClient({
             </div>
           ) : null}
 
-          {error ? <div className="error">Nie udało się pobrać odpowiedzi.</div> : null}
+          {error ? <div className="error">{getChatErrorMessage(error)}</div> : null}
           {historyError ? <div className="history-error">{historyError}</div> : null}
           {profileError ? <div className="history-error">{profileError}</div> : null}
           <div ref={bottomRef} />

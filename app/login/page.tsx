@@ -9,7 +9,9 @@ type AuthMode = "login" | "register";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(
+    searchParams.get("mode") === "register" ? "register" : "login",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -7,12 +7,13 @@ import { supabase } from "@/lib/supabase";
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isReady, setIsReady] = useState(pathname === "/login");
+  const isPublicPage = pathname === "/" || pathname === "/login";
+  const [isReady, setIsReady] = useState(isPublicPage);
 
   useEffect(() => {
     let isMounted = true;
 
-    if (pathname === "/login") {
+    if (isPublicPage) {
       setIsReady(true);
       return;
     }
@@ -34,7 +35,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user && pathname !== "/login") {
+      if (!session?.user && !isPublicPage) {
         router.replace("/login");
       }
     });
@@ -43,7 +44,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [pathname, router]);
+  }, [isPublicPage, pathname, router]);
 
   if (!isReady) {
     return (

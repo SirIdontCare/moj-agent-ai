@@ -11,6 +11,7 @@ import {
   searchWikipediaTool,
 } from "../../lib/tools";
 import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
+import { recordApiUsage } from "@/lib/api-usage";
 
 export const maxDuration = 120;
 
@@ -136,6 +137,15 @@ export async function POST(request: Request) {
     stopWhen: isStepCount(8),
     toolChoice: "auto",
     tools,
+    onEnd: async ({ usage }) => {
+      await recordApiUsage(
+        auth.supabase,
+        auth.user.id,
+        MODEL,
+        "/api/report",
+        usage,
+      );
+    },
   });
 
   return result.toUIMessageStreamResponse({

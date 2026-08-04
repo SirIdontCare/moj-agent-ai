@@ -263,7 +263,7 @@ export default function UsageDashboard() {
                       <CartesianGrid stroke="#262630" strokeDasharray="3 5" vertical={false} />
                       <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#777382", fontSize: 11 }} />
                       <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#777382", fontSize: 11 }} />
-                      <Tooltip contentStyle={tooltipStyle} formatter={(value) => [Number(value), "Rozmowy"]} cursor={{ fill: "rgba(255,255,255,.03)" }} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(value) => [Number(value), "Aktywne rozmowy"]} cursor={{ fill: "rgba(255,255,255,.03)" }} />
                       <Bar dataKey="conversations" fill="#55c9a5" radius={[5, 5, 1, 1]} maxBarSize={38} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -315,7 +315,7 @@ export default function UsageDashboard() {
                 </div>
                 <div className="usage-table-wrap">
                   <table className="usage-table">
-                    <thead><tr><th>Użytkownik</th><th>Tytuł</th><th>Wiadomości</th><th>Data</th></tr></thead>
+                    <thead><tr><th>Użytkownik</th><th>Tytuł</th><th>Wiadomości</th><th>Ostatnia aktywność</th></tr></thead>
                     <tbody>
                       {data.recentConversations.map((conversation) => (
                         <tr key={conversation.id}>

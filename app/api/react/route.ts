@@ -9,6 +9,7 @@ import {
 } from "ai";
 import { createReactTools } from "../../lib/tools";
 import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
+import { recordApiUsage } from "@/lib/api-usage";
 
 export const maxDuration = 60;
 
@@ -123,6 +124,15 @@ export async function POST(request: Request) {
       requireKnowledgeSearch && stepNumber === 0
         ? { toolChoice: { type: "tool", toolName: "searchKnowledge" } }
         : undefined,
+    onEnd: async ({ usage }) => {
+      await recordApiUsage(
+        auth.supabase,
+        auth.user.id,
+        PRIMARY_MODEL,
+        "/api/react",
+        usage,
+      );
+    },
   });
 
   return result.toUIMessageStreamResponse({

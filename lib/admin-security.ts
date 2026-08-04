@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
+import { DAILY_API_TOKEN_LIMIT } from "@/lib/api-usage";
 
-const DAILY_TOKEN_LIMIT = 100;
+const DAILY_TOKEN_LIMIT = DAILY_API_TOKEN_LIMIT;
 
 type SecurityEventRow = {
   id: number;

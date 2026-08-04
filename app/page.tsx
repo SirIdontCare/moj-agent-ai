@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import DashboardClient from "./dashboard/dashboard-client";
 import { supabase } from "@/lib/supabase";
+import ThemeToggle from "./theme-toggle";
 
 const features = [
   {
@@ -120,7 +121,10 @@ function LandingPage() {
           <a href="#mozliwosci">Możliwości</a>
           <a href="#jak-dziala">Jak działa</a>
         </div>
-        <Link className="landing-nav-login" href="/login">Zaloguj się <span>→</span></Link>
+        <div className="landing-nav-actions">
+          <ThemeToggle compact />
+          <Link className="landing-nav-login" href="/login">Zaloguj się <span>→</span></Link>
+        </div>
       </nav>
 
       <section className="landing-hero">

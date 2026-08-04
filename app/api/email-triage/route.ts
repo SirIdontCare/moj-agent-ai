@@ -1,6 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
+import { recordApiUsage } from "@/lib/api-usage";
 
 export const maxDuration = 60;
 
@@ -116,6 +117,15 @@ export async function POST(request: Request) {
     model: google(MODEL),
     system: systemPrompt,
     prompt: `Przeanalizuj poniższe maile:\n\n${numberedEmails}`,
+    onEnd: async ({ usage }) => {
+      await recordApiUsage(
+        auth.supabase,
+        auth.user.id,
+        MODEL,
+        "/api/email-triage",
+        usage,
+      );
+    },
   });
 
   return result.toTextStreamResponse();

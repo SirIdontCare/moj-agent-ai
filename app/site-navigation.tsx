@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import ThemeToggle from "./theme-toggle";
 
 const navigationItems = [
   { href: "/", label: "Dashboard", emoji: "🏠" },
@@ -96,6 +97,7 @@ export default function SiteNavigation() {
           })}
         </nav>
         <div className="sidebar-account">
+          <ThemeToggle />
           {email ? <small title={email}>{email}</small> : null}
           <button onClick={() => void handleSignOut()} type="button">
             ↪ Wyloguj

@@ -9,7 +9,8 @@ type ConversationUserRow = {
   user_id: string;
 };
 
-type ConversationDateRow = {
+type ConversationActivityRow = {
+  conversation_id: string;
   created_at: string;
 };
 
@@ -26,6 +27,7 @@ type RecentConversationRow = {
   user_id: string;
   title: string | null;
   created_at: string;
+  updated_at: string;
   messages: Array<{ count: number }> | null;
 };
 
@@ -93,16 +95,17 @@ async function fetchAllConversationUsers(supabase: SupabaseClient) {
   return rows;
 }
 
-async function fetchRecentConversationDates(
+async function fetchRecentConversationActivity(
   supabase: SupabaseClient,
   since: string,
 ) {
-  const rows: ConversationDateRow[] = [];
+  const rows: ConversationActivityRow[] = [];
 
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await supabase
-      .from("conversations")
-      .select("created_at")
+      .from("messages")
+      .select("conversation_id, created_at")
+      .eq("role", "user")
       .gte("created_at", since)
       .order("created_at", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -111,7 +114,7 @@ async function fetchRecentConversationDates(
       throw new Error("Nie udało się pobrać trendu rozmów.");
     }
 
-    const page = (data ?? []) as ConversationDateRow[];
+    const page = (data ?? []) as ConversationActivityRow[];
     rows.push(...page);
 
     if (page.length < PAGE_SIZE) break;
@@ -161,18 +164,18 @@ export async function getAdminUsageDashboard() {
   const [
     totalConversationsResult,
     conversationUsers,
-    conversationDates,
+    conversationActivity,
     usageRows,
     recentConversationsResult,
   ] = await Promise.all([
     supabase.from("conversations").select("id", { count: "exact", head: true }),
     fetchAllConversationUsers(supabase),
-    fetchRecentConversationDates(supabase, since),
+    fetchRecentConversationActivity(supabase, since),
     fetchRecentUsage(supabase, since),
     supabase
       .from("conversations")
-      .select("id, user_id, title, created_at, messages(count)")
-      .order("created_at", { ascending: false })
+      .select("id, user_id, title, created_at, updated_at, messages(count)")
+      .order("updated_at", { ascending: false })
       .limit(10),
   ]);
 
@@ -207,8 +210,16 @@ export async function getAdminUsageDashboard() {
     if (day) day.tokens += Number(row.total_tokens) || 0;
   }
 
-  for (const row of conversationDates) {
-    const day = dailyByDate.get(getWarsawDateKey(row.created_at));
+  const dailyConversationIds = new Set<string>();
+
+  for (const row of conversationActivity) {
+    const date = getWarsawDateKey(row.created_at);
+    const activityKey = `${date}:${row.conversation_id}`;
+
+    if (dailyConversationIds.has(activityKey)) continue;
+
+    dailyConversationIds.add(activityKey);
+    const day = dailyByDate.get(date);
     if (day) day.conversations += 1;
   }
 
@@ -267,7 +278,7 @@ export async function getAdminUsageDashboard() {
       id: conversation.id,
       email: emails.get(conversation.user_id) ?? "Nieznany użytkownik",
       title: conversation.title?.trim() || "Nowa rozmowa",
-      createdAt: conversation.created_at,
+      createdAt: conversation.updated_at,
       messageCount: conversation.messages?.[0]?.count ?? 0,
     })),
   };

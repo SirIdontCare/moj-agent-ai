@@ -772,7 +772,7 @@ export async function POST(request: Request) {
   }
 
   const { messages, mode, model } = inputValidation.data;
-  const dailyUsageResult = await getDailyApiUsage(supabase);
+  const dailyUsageResult = await getDailyApiUsage(userId);
 
   if ("error" in dailyUsageResult) {
     return Response.json({ error: dailyUsageResult.error }, { status: 503 });
@@ -896,6 +896,7 @@ export async function POST(request: Request) {
     onEnd: async ({ usage }) => {
       await recordApiUsage(
         supabase,
+        userId,
         selectableModels[selectedModel],
         "/api/chat",
         usage,

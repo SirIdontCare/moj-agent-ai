@@ -27,6 +27,7 @@ const navigationItems = [
   { href: "/generate", label: "Grafiki", emoji: "🎨" },
   { href: "/vision", label: "Vision", emoji: "👁️" },
   { href: "/extract", label: "Analizator", emoji: "📊" },
+  { href: "/admin/dashboard", label: "Użycie", emoji: "📈" },
   { href: "/admin/security", label: "Bezpieczeństwo", emoji: "🛡️" },
 ];
 

@@ -10,9 +10,9 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Agent AI — Myśl, twórz i działaj szybciej.",
+  title: "Agent AI — Zleć cel. Agent zrobi resztę.",
   description:
-    "Uniwersalny agent AI, który zna Twoje dokumenty, pamięta kontekst i pomaga w codziennej pracy.",
+    "Jeden autonomiczny agent do researchu, dokumentów, obliczeń, obrazów i gotowych materiałów. Bez przełączania modułów.",
   applicationName: "Agent AI",
   manifest: "/manifest.json",
   icons: {
@@ -27,22 +27,22 @@ export const metadata: Metadata = {
     locale: "pl_PL",
     url: "/",
     siteName: "Agent AI",
-    title: "Agent AI — Myśl, twórz i działaj szybciej.",
-    description: "Uniwersalny agent AI, który zna Twoją firmę i odpowiada na podstawie Twoich dokumentów.",
+    title: "Agent AI — Zleć cel. Agent zrobi resztę.",
+    description: "Jeden czat. Wszystkie narzędzia. Od celu do zweryfikowanego, gotowego rezultatu.",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Agent AI — Myśl, twórz i działaj szybciej.",
+        url: "/og-image-v2.png",
+        width: 1730,
+        height: 909,
+        alt: "Agent AI — Zleć cel. Agent zrobi resztę.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agent AI — Myśl, twórz i działaj szybciej.",
-    description: "Uniwersalny agent AI, który zna Twoją firmę i odpowiada na podstawie Twoich dokumentów.",
-    images: ["/og-image.png"],
+    title: "Agent AI — Zleć cel. Agent zrobi resztę.",
+    description: "Jeden czat. Wszystkie narzędzia. Od celu do gotowego rezultatu.",
+    images: ["/og-image-v2.png"],
   },
   appleWebApp: {
     capable: true,

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import DashboardClient from "./dashboard/dashboard-client";
+import ChatClient from "./chat-client";
 import { supabase } from "@/lib/supabase";
 import ThemeToggle from "./theme-toggle";
 
@@ -11,13 +11,13 @@ const features = [
   {
     icon: "✦",
     title: "Pamięta kontekst",
-    description: "Wracaj do rozmów bez powtarzania całej historii. Marta pamięta to, co ważne.",
+    description: "Wracaj do rozmów bez powtarzania całej historii. Agent pamięta to, co ważne.",
     tone: "violet",
   },
   {
     icon: "▤",
     title: "Zna Twoje dokumenty",
-    description: "Odpowiada na podstawie cenników, procedur i materiałów, które jej udostępnisz.",
+    description: "Odpowiada na podstawie cenników, procedur i materiałów, które dodasz.",
     tone: "mint",
   },
   {
@@ -28,7 +28,7 @@ const features = [
   },
   {
     icon: "↗",
-    title: "Gotowa przez całą dobę",
+    title: "Gotowy przez całą dobę",
     description: "Przygotowuje briefingi i porządkuje pracę, także wtedy, kiedy Ty odpoczywasz.",
     tone: "blue",
   },
@@ -37,21 +37,21 @@ const features = [
 function BrandMark() {
   return (
     <span className="landing-brand-mark" aria-hidden="true">
-      M
+      ✦
     </span>
   );
 }
 
 function ProductPreview() {
   return (
-    <div className="landing-preview" aria-label="Podgląd rozmowy z Martą AI">
+    <div className="landing-preview" aria-label="Podgląd rozmowy z Agentem AI">
       <div className="preview-glow preview-glow-one" />
       <div className="preview-glow preview-glow-two" />
       <div className="preview-window">
         <div className="preview-sidebar">
           <div className="preview-mini-brand">
             <BrandMark />
-            <span>Marta AI</span>
+            <span>Agent AI</span>
           </div>
           <div className="preview-new-chat">＋ Nowa rozmowa</div>
           <div className="preview-nav-item preview-nav-active"><span>⌁</span> Czat</div>
@@ -68,8 +68,8 @@ function ProductPreview() {
           <header className="preview-chat-header">
             <div>
               <span className="preview-status-dot" />
-              <strong>Marta</strong>
-              <small>Twoja doradczyni AI</small>
+              <strong>Agent AI</strong>
+              <small>Uniwersalny asystent</small>
             </div>
             <span className="preview-secure">● Dane prywatne</span>
           </header>
@@ -79,7 +79,7 @@ function ProductPreview() {
               Który pakiet będzie najlepszy dla zespołu 12 osób?
             </div>
             <div className="preview-answer-row">
-              <span className="preview-avatar">M</span>
+              <span className="preview-avatar">✦</span>
               <div className="preview-message preview-message-agent">
                 <p>Dla zespołu 12 osób najlepiej sprawdzi się <strong>Pakiet Business.</strong></p>
                 <div className="preview-answer-grid">
@@ -113,9 +113,9 @@ function LandingPage() {
   return (
     <main className="landing-shell">
       <nav className="landing-nav" aria-label="Nawigacja strony głównej">
-        <Link className="landing-logo" href="/" aria-label="Marta AI — strona główna">
+        <Link className="landing-logo" href="/" aria-label="Agent AI — strona główna">
           <BrandMark />
-          <span>Marta <em>AI</em></span>
+          <span>Agent <em>AI</em></span>
         </Link>
         <div className="landing-nav-links">
           <a href="#mozliwosci">Możliwości</a>
@@ -134,8 +134,8 @@ function LandingPage() {
           <div className="landing-eyebrow"><span>✦</span> Inteligencja, która zna Twoją firmę</div>
           <h1>Twoja wiedza.<br /><span>Twoja przewaga.</span></h1>
           <p>
-            Marta to osobista doradczyni AI, która zna Twoje dokumenty, pamięta kontekst
-            i pomaga podejmować trafne decyzje — w kilka sekund.
+            Uniwersalny agent, który zna Twoje dokumenty, pamięta kontekst
+            i pomaga analizować, tworzyć oraz podejmować decyzje — w kilka sekund.
           </p>
           <div className="landing-hero-actions">
             <Link className="landing-primary-cta" href="/login?mode=register">
@@ -158,8 +158,8 @@ function LandingPage() {
       <section className="landing-features" id="mozliwosci" aria-labelledby="features-title">
         <div className="landing-section-heading">
           <p>WIĘCEJ NIŻ CHATBOT</p>
-          <h2 id="features-title">Jedna asystentka.<br />Cała wiedza Twojej firmy.</h2>
-          <span>Marta łączy rozproszone informacje i zamienia je w konkretne odpowiedzi.</span>
+          <h2 id="features-title">Jeden agent.<br />Cała wiedza Twojej firmy.</h2>
+          <span>Agent łączy rozproszone informacje i zamienia je w konkretne odpowiedzi.</span>
         </div>
         <div className="landing-feature-grid">
           {features.map((feature) => (
@@ -178,7 +178,7 @@ function LandingPage() {
           <p>OD PYTANIA DO PEWNEJ ODPOWIEDZI</p>
           <h2 id="demo-title">Nie szukaj.<br />Po prostu zapytaj.</h2>
           <span>
-            Marta przeszukuje Twoje materiały, wybiera właściwy fragment i zawsze pokazuje,
+            Agent przeszukuje Twoje materiały, wybiera właściwy fragment i zawsze pokazuje,
             skąd pochodzi odpowiedź.
           </span>
           <ul>
@@ -189,10 +189,10 @@ function LandingPage() {
         </div>
         <div className="landing-demo-card">
           <div className="landing-demo-dots"><span /><span /><span /></div>
-          <p>Zapytaj o cennik → Marta odpowiada z <strong>Twoich dokumentów</strong></p>
+          <p>Zapytaj o cennik → Agent odpowiada z <strong>Twoich dokumentów</strong></p>
           <div className="landing-demo-question">Jakie warunki rabatowe mamy dla stałych klientów?</div>
           <div className="landing-demo-answer">
-            <span className="preview-avatar">M</span>
+            <span className="preview-avatar">✦</span>
             <div>
               <p>Stali klienci otrzymują <strong>10% rabatu</strong> przy umowie rocznej lub <strong>15%</strong> przy płatności z góry.</p>
               <small>▤ Polityka_rabatowa.pdf · sekcja 2.1</small>
@@ -205,7 +205,7 @@ function LandingPage() {
         <div className="landing-final-orb" />
         <div>
           <p>GOTOWY NA SPOKOJNIEJSZY DZIEŃ?</p>
-          <h2>Twoja Marta jest gotowa.<br /><span>Zacznij w 30 sekund.</span></h2>
+          <h2>Twój Agent jest gotowy.<br /><span>Zacznij w 30 sekund.</span></h2>
         </div>
         <Link className="landing-primary-cta landing-primary-cta-light" href="/login?mode=register">
           Stwórz darmowe konto <span>→</span>
@@ -215,9 +215,9 @@ function LandingPage() {
       <footer className="landing-footer">
         <Link className="landing-logo" href="/">
           <BrandMark />
-          <span>Marta <em>AI</em></span>
+          <span>Agent <em>AI</em></span>
         </Link>
-        <p>© 2026 Marta AI. Twoja wiedza pracuje dla Ciebie.</p>
+        <p>© 2026 Agent AI. Twoja wiedza pracuje dla Ciebie.</p>
         <div><a href="#mozliwosci">Możliwości</a><Link href="/login">Logowanie</Link></div>
       </footer>
     </main>
@@ -253,10 +253,24 @@ export default function Home() {
     return (
       <main className="auth-loading" role="status">
         <div className="auth-spinner" />
-        <p>Przygotowuję Martę...</p>
+        <p>Przygotowuję Agenta...</p>
       </main>
     );
   }
 
-  return user ? <DashboardClient /> : <LandingPage />;
+  return user ? (
+    <ChatClient
+      api="/api/chat"
+      description="Uniwersalny asystent do analizy, pisania, planowania i codziennej pracy."
+      emptyMessage="Cześć! W czym mogę Ci dziś pomóc?"
+      exampleQuestions={[
+        "Pomóż mi zaplanować najważniejsze zadania na dziś",
+        "Przeanalizuj ten pomysł i wskaż ryzyka",
+        "Napisz profesjonalną odpowiedź na trudnego maila",
+        "Wytłumacz mi złożony temat prostymi słowami",
+      ]}
+      inputPlaceholder="Napisz wiadomość..."
+      title="Agent AI"
+    />
+  ) : <LandingPage />;
 }

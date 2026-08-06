@@ -1,7 +1,7 @@
 {
-  "name": "Marta AI — doradczyni podatkowa",
-  "short_name": "Marta AI",
-  "description": "Osobista doradczyni AI, która zna Twoje dokumenty i pamięta kontekst.",
+  "name": "Agent AI — uniwersalny asystent",
+  "short_name": "Agent AI",
+  "description": "Uniwersalny agent AI, który zna Twoje dokumenty i pamięta kontekst.",
   "lang": "pl",
   "start_url": "/",
   "scope": "/",

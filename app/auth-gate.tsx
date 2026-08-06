@@ -2,7 +2,34 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { authenticatedFetch, supabase } from "@/lib/supabase";
+
+const adminOnlyPrefixes = [
+  "/admin",
+  "/agent",
+  "/briefings",
+  "/competitor",
+  "/dashboard",
+  "/email-triage",
+  "/extract",
+  "/fewshot",
+  "/format",
+  "/generate",
+  "/meal-planner",
+  "/react",
+  "/report",
+  "/reports",
+  "/search",
+  "/think",
+  "/travel",
+  "/vision",
+];
+
+function requiresAdmin(pathname: string) {
+  return adminOnlyPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,7 +47,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
     setIsReady(false);
 
-    void supabase.auth.getUser().then(({ data: { user } }) => {
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!isMounted) return;
 
       if (!user) {
@@ -29,7 +56,26 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setIsReady(true);
+      if (requiresAdmin(pathname)) {
+        try {
+          const response = await authenticatedFetch("/api/admin/me");
+          const result = response.ok
+            ? await response.json() as { isAdmin?: boolean }
+            : null;
+
+          if (!result?.isAdmin) {
+            router.replace("/chat");
+            return;
+          }
+        } catch {
+          router.replace("/chat");
+          return;
+        }
+      }
+
+      if (isMounted) {
+        setIsReady(true);
+      }
     });
 
     const {

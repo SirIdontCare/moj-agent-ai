@@ -777,7 +777,7 @@ export default function ChatClient({
   const [model, setModel] = useState<AIModel>("flash");
   const [messageModes, setMessageModes] = useState<Record<string, ChatMode>>({});
   const [messageModels, setMessageModels] = useState<Record<string, AIModel>>({});
-  const [isContextOpen, setIsContextOpen] = useState(true);
+  const [isContextOpen, setIsContextOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState("");
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
   const [imageError, setImageError] = useState("");
@@ -1376,10 +1376,10 @@ export default function ChatClient({
               </div>
             </div>
           ) : null}
-          {profile?.display_name ? (
+          {profile?.display_name && visibleMessages.length === 0 ? (
             <p className="profile-greeting">👋 Cześć, {profile.display_name}! Miło Cię znowu widzieć.</p>
           ) : null}
-          {exampleQuestions.length > 0 ? (
+          {exampleQuestions.length > 0 && visibleMessages.length === 0 ? (
             <div className="example-questions" aria-label="Przykładowe pytania">
               {exampleQuestions.map((question) => (
                 <button

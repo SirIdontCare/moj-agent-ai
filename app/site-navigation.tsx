@@ -2,41 +2,32 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useMemo, useState } from "react";
+import { authenticatedFetch, supabase } from "@/lib/supabase";
 import ThemeToggle from "./theme-toggle";
+import PwaInstallCard from "./pwa-install";
 
-const navigationItems = [
-  { href: "/", label: "Dashboard", emoji: "🏠" },
-  { href: "/email-triage", label: "E-mail Triage", emoji: "📧" },
-  { href: "/report", label: "Raporty", emoji: "📊" },
-  { href: "/reports", label: "Zapisane raporty", emoji: "🗂️" },
-  { href: "/briefings", label: "Briefingi", emoji: "📰" },
-  { href: "/competitor", label: "Konkurencja", emoji: "🏢" },
-  { href: "/meal-planner", label: "Posiłki", emoji: "🍽️" },
-  { href: "/travel", label: "Podróże", emoji: "✈️" },
-  { href: "/react", label: "ReAct", emoji: "🔄" },
-  { href: "/agent", label: "Agent", emoji: "🤖" },
-  { href: "/chat", label: "Chat", emoji: "💬" },
-  { href: "/history", label: "Historia", emoji: "📜" },
-  { href: "/think", label: "Myślenie", emoji: "🧠" },
-  { href: "/fewshot", label: "Słownik AI", emoji: "📚" },
-  { href: "/upload", label: "Baza wiedzy", emoji: "📚" },
-  { href: "/knowledge", label: "Podgląd wiedzy", emoji: "🔎" },
-  { href: "/format", label: "Formatowanie", emoji: "📐" },
-  { href: "/search", label: "Szukaj", emoji: "🌐" },
-  { href: "/generate", label: "Grafiki", emoji: "🎨" },
-  { href: "/vision", label: "Vision", emoji: "👁️" },
-  { href: "/extract", label: "Analizator", emoji: "📊" },
-  { href: "/admin/dashboard", label: "Użycie", emoji: "📈" },
-  { href: "/admin/security", label: "Bezpieczeństwo", emoji: "🛡️" },
+const userNavigationGroups = [
+  {
+    label: "Workspace",
+    items: [
+      { href: "/history", label: "Historia", icon: "◷" },
+      { href: "/upload", label: "Dodaj materiały", icon: "↑" },
+      { href: "/knowledge", label: "Baza wiedzy", icon: "▤" },
+    ],
+  },
 ];
 
-function isActivePath(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === "/" || pathname === "/dashboard";
-  }
+const adminNavigationGroup = {
+  label: "Administracja",
+  items: [
+    { href: "/admin/test", label: "Panel testowy", icon: "⌘" },
+    { href: "/admin/dashboard", label: "Użycie i koszty", icon: "↗" },
+    { href: "/admin/security", label: "Bezpieczeństwo", icon: "◇" },
+  ],
+};
 
+function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -45,10 +36,32 @@ export default function SiteNavigation() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [query, setQuery] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email ?? ""));
+    void authenticatedFetch("/api/admin/me")
+      .then((response) => response.ok ? response.json() : null)
+      .then((result: { isAdmin?: boolean } | null) => setIsAdmin(result?.isAdmin === true))
+      .catch(() => setIsAdmin(false));
   }, []);
+
+  const visibleGroups = useMemo(() => {
+    const groups = isAdmin ? [...userNavigationGroups, adminNavigationGroup] : userNavigationGroups;
+    const normalizedQuery = query.trim().toLocaleLowerCase("pl-PL");
+
+    if (!normalizedQuery) {
+      return groups;
+    }
+
+    return groups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => item.label.toLocaleLowerCase("pl-PL").includes(normalizedQuery)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [isAdmin, query]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -59,8 +72,8 @@ export default function SiteNavigation() {
   return (
     <>
       <header className="mobile-nav">
-        <Link className="mobile-nav-brand" href="/">
-          🏠 Agent AI
+        <Link className="mobile-nav-brand" href="/chat">
+          <span>✦</span> Agent AI
         </Link>
         <button
           aria-expanded={isOpen}
@@ -68,39 +81,70 @@ export default function SiteNavigation() {
           onClick={() => setIsOpen((current) => !current)}
           type="button"
         >
-          ☰
+          {isOpen ? "×" : "☰"}
         </button>
       </header>
       <aside className={`app-sidebar ${isOpen ? "app-sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <span>⚡</span>
+          <span className="sidebar-brand-mark">✦</span>
           <div>
             <strong>Agent AI</strong>
-            <small>Centrum dowodzenia</small>
+            <small><i /> Gotowy do pracy</small>
           </div>
         </div>
-        <nav className="sidebar-nav" aria-label="Nawigacja główna">
-          {navigationItems.map((item) => {
-            const isActive = isActivePath(pathname, item.href);
 
-            return (
-              <Link
-                className={isActive ? "sidebar-link sidebar-link-active" : "sidebar-link"}
-                href={item.href}
-                key={item.href}
-                onClick={() => setIsOpen(false)}
-              >
-                <span aria-hidden="true">{item.emoji}</span>
-                {item.label}
-              </Link>
-            );
-          })}
+        <Link className="sidebar-new-chat" href="/chat" onClick={() => setIsOpen(false)}>
+          <span>＋</span> Nowa rozmowa
+        </Link>
+
+        <label className="sidebar-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            aria-label="Szukaj w menu"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Szukaj..."
+            type="search"
+            value={query}
+          />
+          <kbd>⌘ K</kbd>
+        </label>
+
+        <nav className="sidebar-nav" aria-label="Nawigacja główna">
+          {visibleGroups.map((group) => (
+            <div className="sidebar-nav-group" key={group.label}>
+              <p>{group.label}</p>
+              {group.items.map((item) => {
+                const isActive = isActivePath(pathname, item.href);
+
+                return (
+                  <Link
+                    className={isActive ? "sidebar-link sidebar-link-active" : "sidebar-link"}
+                    href={item.href}
+                    key={item.href}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span aria-hidden="true">{item.icon}</span>
+                    <b>{item.label}</b>
+                    {isActive ? <i aria-hidden="true" /> : null}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+          {visibleGroups.length === 0 ? <p className="sidebar-empty">Brak wyników.</p> : null}
         </nav>
+        <PwaInstallCard />
         <div className="sidebar-account">
-          <ThemeToggle />
-          {email ? <small title={email}>{email}</small> : null}
+          <div className="sidebar-profile">
+            <span>{email ? email.slice(0, 1).toUpperCase() : "A"}</span>
+            <div>
+              <strong>{email ? email.split("@")[0] : "Konto"}</strong>
+              {email ? <small title={email}>{email}</small> : null}
+            </div>
+            <ThemeToggle />
+          </div>
           <button onClick={() => void handleSignOut()} type="button">
-            ↪ Wyloguj
+            Wyloguj <span aria-hidden="true">↗</span>
           </button>
         </div>
       </aside>

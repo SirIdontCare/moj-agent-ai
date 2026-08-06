@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AuthGate from "./auth-gate";
+import { PwaInstallProvider } from "./pwa-install";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -9,10 +10,10 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Marta AI — Twoja wiedza. Twoja przewaga.",
+  title: "Agent AI — Myśl, twórz i działaj szybciej.",
   description:
-    "Osobista doradczyni AI, która zna Twoje dokumenty, pamięta kontekst i pomaga podejmować trafne decyzje.",
-  applicationName: "Marta AI",
+    "Uniwersalny agent AI, który zna Twoje dokumenty, pamięta kontekst i pomaga w codziennej pracy.",
+  applicationName: "Agent AI",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -25,23 +26,28 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pl_PL",
     url: "/",
-    siteName: "Marta AI",
-    title: "Marta AI — Twoja wiedza. Twoja przewaga.",
-    description: "Doradczyni AI, która zna Twoją firmę i odpowiada na podstawie Twoich dokumentów.",
+    siteName: "Agent AI",
+    title: "Agent AI — Myśl, twórz i działaj szybciej.",
+    description: "Uniwersalny agent AI, który zna Twoją firmę i odpowiada na podstawie Twoich dokumentów.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Marta AI — Twoja wiedza. Twoja przewaga.",
+        alt: "Agent AI — Myśl, twórz i działaj szybciej.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Marta AI — Twoja wiedza. Twoja przewaga.",
-    description: "Doradczyni AI, która zna Twoją firmę i odpowiada na podstawie Twoich dokumentów.",
+    title: "Agent AI — Myśl, twórz i działaj szybciej.",
+    description: "Uniwersalny agent AI, który zna Twoją firmę i odpowiada na podstawie Twoich dokumentów.",
     images: ["/og-image.png"],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Agent AI",
   },
 };
 
@@ -54,7 +60,7 @@ export const viewport = {
 
 const themeScript = `
   try {
-    var savedTheme = localStorage.getItem("marta-theme");
+    var savedTheme = localStorage.getItem("agent-theme");
     document.documentElement.dataset.theme = savedTheme === "light" ? "light" : "dark";
   } catch (_) {
     document.documentElement.dataset.theme = "dark";
@@ -72,7 +78,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <AuthGate>{children}</AuthGate>
+        <PwaInstallProvider>
+          <AuthGate>{children}</AuthGate>
+        </PwaInstallProvider>
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
-const storageKey = "marta-theme";
+const storageKey = "agent-theme";
 
 export default function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const [theme, setTheme] = useState<Theme>("dark");

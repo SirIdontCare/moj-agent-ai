@@ -1,21 +1,21 @@
 import ChatClient from "../chat-client";
 
 const exampleQuestions = [
-  "Czy na B2B lepszy będzie ryczałt czy skala?",
-  "Jakie koszty mogę wrzucić w działalność usługową?",
-  "Kiedy muszę zarejestrować się do VAT?",
-  "Jak rozliczyć fakturę za narzędzia online z UE?",
+  "Pomóż mi zaplanować najważniejsze zadania na dziś",
+  "Przeanalizuj ten pomysł i wskaż ryzyka",
+  "Napisz profesjonalną odpowiedź na trudnego maila",
+  "Wytłumacz mi złożony temat prostymi słowami",
 ];
 
 export default function ChatPage() {
   return (
     <ChatClient
       api="/api/chat"
-      description="Ekspert od podatków B2B. Zapytaj mnie o PIT, VAT, ryczałt, koszty firmowe i wybór formy opodatkowania."
-      emptyMessage="Cześć, jestem Marta. Zapytaj mnie o podatki."
+      description="Uniwersalny asystent do analizy, pisania, planowania i codziennej pracy."
+      emptyMessage="Cześć! W czym mogę Ci dziś pomóc?"
       exampleQuestions={exampleQuestions}
       inputPlaceholder="Napisz wiadomość..."
-      title="Marta — doradczyni podatkowa 💰"
+      title="Agent AI"
     />
   );
 }

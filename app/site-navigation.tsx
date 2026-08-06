@@ -7,16 +7,10 @@ import { authenticatedFetch, supabase } from "@/lib/supabase";
 import ThemeToggle from "./theme-toggle";
 import PwaInstallCard from "./pwa-install";
 
-const userNavigationGroups = [
-  {
-    label: "Workspace",
-    items: [
-      { href: "/history", label: "Historia", icon: "◷" },
-      { href: "/upload", label: "Dodaj materiały", icon: "↑" },
-      { href: "/knowledge", label: "Baza wiedzy", icon: "▤" },
-    ],
-  },
-];
+const userNavigationGroups: Array<{
+  label: string;
+  items: Array<{ href: string; label: string; icon: string }>;
+}> = [];
 
 const adminNavigationGroup = {
   label: "Administracja",
@@ -25,6 +19,12 @@ const adminNavigationGroup = {
     { href: "/admin/dashboard", label: "Użycie i koszty", icon: "↗" },
     { href: "/admin/security", label: "Bezpieczeństwo", icon: "◇" },
   ],
+};
+
+type RecentConversation = {
+  id: string;
+  title: string | null;
+  updated_at: string;
 };
 
 function isActivePath(pathname: string, href: string) {
@@ -38,9 +38,23 @@ export default function SiteNavigation() {
   const [email, setEmail] = useState("");
   const [query, setQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [recentConversations, setRecentConversations] = useState<RecentConversation[]>([]);
 
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email ?? ""));
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+      setEmail(user?.email ?? "");
+
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("conversations")
+        .select("id, title, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(6);
+
+      setRecentConversations((data ?? []) as RecentConversation[]);
+    });
     void authenticatedFetch("/api/admin/me")
       .then((response) => response.ok ? response.json() : null)
       .then((result: { isAdmin?: boolean } | null) => setIsAdmin(result?.isAdmin === true))
@@ -62,6 +76,14 @@ export default function SiteNavigation() {
       }))
       .filter((group) => group.items.length > 0);
   }, [isAdmin, query]);
+
+  const visibleRecentConversations = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("pl-PL");
+
+    return recentConversations.filter((conversation) =>
+      !normalizedQuery || (conversation.title ?? "Nowa rozmowa").toLocaleLowerCase("pl-PL").includes(normalizedQuery),
+    );
+  }, [query, recentConversations]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -131,7 +153,25 @@ export default function SiteNavigation() {
               })}
             </div>
           ))}
-          {visibleGroups.length === 0 ? <p className="sidebar-empty">Brak wyników.</p> : null}
+          {visibleRecentConversations.length > 0 ? (
+            <div className="sidebar-nav-group sidebar-recent-group">
+              <p>Ostatnie rozmowy</p>
+              {visibleRecentConversations.map((conversation) => (
+                <a
+                  className="sidebar-recent-link"
+                  href={`/chat?conversation=${encodeURIComponent(conversation.id)}`}
+                  key={conversation.id}
+                  onClick={() => setIsOpen(false)}
+                  title={conversation.title ?? "Nowa rozmowa"}
+                >
+                  <span>⌁</span>
+                  <b>{conversation.title ?? "Nowa rozmowa"}</b>
+                  <i>•••</i>
+                </a>
+              ))}
+            </div>
+          ) : null}
+          {query && visibleGroups.length === 0 && visibleRecentConversations.length === 0 ? <p className="sidebar-empty">Brak wyników.</p> : null}
         </nav>
         <PwaInstallCard />
         <div className="sidebar-account">

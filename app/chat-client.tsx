@@ -48,7 +48,15 @@ type ChatClientProps = {
   showReactSteps?: boolean;
   showTravelCards?: boolean;
   showDiagnostics?: boolean;
+  productExperience?: boolean;
 };
+
+const productStarterMeta = [
+  { icon: "⌖", label: "Zaplanuj podróż", detail: "Pogoda, waluty, daty i gotowy plan" },
+  { icon: "◎", label: "Zrób research", detail: "Aktualne źródła i jasna rekomendacja" },
+  { icon: "▤", label: "Przeanalizuj plik", detail: "PDF, dane i konkretne wnioski" },
+  { icon: "✦", label: "Stwórz briefing", detail: "Najważniejsze informacje w jednym miejscu" },
+] as const;
 
 async function requireUserId() {
   const {
@@ -67,6 +75,7 @@ type AttachedImage = {
   filePart: FileUIPart;
   name: string;
   size: number;
+  isImage: boolean;
 };
 
 type ToolInfo = {
@@ -81,6 +90,32 @@ type ToolPart = {
   input?: unknown;
   output?: unknown;
   errorText?: string;
+};
+
+type TaskPlan = {
+  goal: string;
+  deliverable: string;
+  steps: Array<{
+    index?: number;
+    title: string;
+    outcome: string;
+    capabilities?: string[];
+  }>;
+};
+
+type TaskVerification = {
+  status: "passed" | "needs_attention";
+  confidence: number;
+  checks: Array<{ label: string; passed: boolean; note?: string }>;
+  missing?: string[];
+};
+
+type PublishedArtifact = {
+  type: string;
+  title: string;
+  summary: string;
+  content: string;
+  suggestedActions?: string[];
 };
 
 type KnowledgeCitation = {
@@ -100,8 +135,18 @@ type UserProfile = {
   preferences: Record<string, string> | null;
 };
 
-const acceptedImageTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
-const maxImageSize = 4 * 1024 * 1024;
+const acceptedFileTypes = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "text/plain",
+  "text/csv",
+  "application/json",
+];
+const maxFileSize = 4 * 1024 * 1024;
 
 function getConversationTitle(text: string) {
   const normalizedText = text.trim().replace(/\s+/g, " ") || "Nowa rozmowa";
@@ -253,6 +298,130 @@ function getToolName(part: ToolPart) {
   return part.type.replace("tool-", "");
 }
 
+const runtimeToolNames = new Set([
+  "createTaskPlan",
+  "verifyTaskResult",
+  "publishArtifact",
+]);
+
+function getRecord(value: unknown) {
+  return typeof value === "object" && value != null
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function getTaskPlan(toolParts: ToolPart[]): TaskPlan | null {
+  const part = toolParts.find((candidate) => getToolName(candidate) === "createTaskPlan");
+  const record = getRecord(part?.output) ?? getRecord(part?.input);
+
+  if (!record || typeof record.goal !== "string" || !Array.isArray(record.steps)) {
+    return null;
+  }
+
+  const steps = record.steps.flatMap((value, arrayIndex) => {
+    const step = getRecord(value);
+
+    if (!step || typeof step.title !== "string" || typeof step.outcome !== "string") {
+      return [];
+    }
+
+    return [{
+      index: typeof step.index === "number" ? step.index : arrayIndex + 1,
+      title: step.title,
+      outcome: step.outcome,
+      capabilities: Array.isArray(step.capabilities)
+        ? step.capabilities.filter((item): item is string => typeof item === "string")
+        : [],
+    }];
+  });
+
+  if (!steps.length) {
+    return null;
+  }
+
+  return {
+    goal: record.goal,
+    deliverable: typeof record.deliverable === "string" ? record.deliverable : "Gotowy rezultat",
+    steps,
+  };
+}
+
+function getTaskVerification(toolParts: ToolPart[]): TaskVerification | null {
+  const part = toolParts.find((candidate) => getToolName(candidate) === "verifyTaskResult");
+  const record = getRecord(part?.output) ?? getRecord(part?.input);
+
+  if (
+    !record ||
+    (record.status !== "passed" && record.status !== "needs_attention") ||
+    !Array.isArray(record.checks)
+  ) {
+    return null;
+  }
+
+  const checks = record.checks.flatMap((value) => {
+    const check = getRecord(value);
+
+    if (!check || typeof check.label !== "string" || typeof check.passed !== "boolean") {
+      return [];
+    }
+
+    return [{
+      label: check.label,
+      passed: check.passed,
+      note: typeof check.note === "string" ? check.note : "",
+    }];
+  });
+
+  return {
+    status: record.status,
+    confidence: typeof record.confidence === "number" ? record.confidence : 0,
+    checks,
+    missing: Array.isArray(record.missing)
+      ? record.missing.filter((item): item is string => typeof item === "string")
+      : [],
+  };
+}
+
+function getPublishedArtifact(toolParts: ToolPart[]): PublishedArtifact | null {
+  const part = toolParts.find((candidate) => getToolName(candidate) === "publishArtifact");
+  const record = getRecord(part?.output);
+
+  if (
+    !record ||
+    record.published !== true ||
+    typeof record.title !== "string" ||
+    typeof record.summary !== "string" ||
+    typeof record.content !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    type: typeof record.type === "string" ? record.type : "document",
+    title: record.title,
+    summary: record.summary,
+    content: record.content,
+    suggestedActions: Array.isArray(record.suggestedActions)
+      ? record.suggestedActions.filter((item): item is string => typeof item === "string")
+      : [],
+  };
+}
+
+function getPersistableMessageContent(message: UIMessage) {
+  const text = getMessageText(message).trim();
+  const artifact = getPublishedArtifact(getToolParts(message));
+
+  if (!artifact) {
+    return text;
+  }
+
+  const artifactMarkdown = `# ${artifact.title}\n\n${artifact.summary}\n\n${artifact.content}`;
+
+  return text && !artifact.content.includes(text)
+    ? `${artifactMarkdown}\n\n---\n\n${text}`
+    : artifactMarkdown;
+}
+
 function getToolError(value: unknown) {
   if (typeof value === "object" && value != null) {
     const record = value as Record<string, unknown>;
@@ -298,9 +467,47 @@ function getToolEmoji(name: string) {
     saveNote: "📝",
     getNotes: "🗒️",
     searchKnowledge: "📚",
+    saveAgentNote: "📝",
+    getAgentNotes: "🗒️",
+    saveReport: "💾",
+    listReports: "📊",
+    getReport: "📄",
+    createMorningBriefing: "🌅",
+    getRecentBriefings: "📰",
+    getSavedBriefing: "📰",
   };
 
   return emojis[name] ?? "🛠️";
+}
+
+function getToolLabel(name: string) {
+  const labels: Record<string, string> = {
+    calculator: "Obliczenia",
+    currentDateTime: "Data i czas",
+    googleSearch: "Wyszukiwanie w internecie",
+    readWebPage: "Czytanie strony",
+    generateImage: "Generowanie grafiki",
+    getWeather: "Sprawdzanie pogody",
+    getExchangeRate: "Kurs waluty",
+    getHolidays: "Święta i dni wolne",
+    searchWikipedia: "Wikipedia",
+    searchKnowledge: "Baza wiedzy",
+    saveAgentNote: "Zapis notatki",
+    getAgentNotes: "Odczyt notatek",
+    saveReport: "Zapis raportu",
+    listReports: "Biblioteka raportów",
+    getReport: "Odczyt raportu",
+    createMorningBriefing: "Przygotowanie briefingu",
+    getRecentBriefings: "Ostatnie briefingi",
+    getSavedBriefing: "Odczyt briefingu",
+    updateUserName: "Personalizacja profilu",
+    saveUserPreference: "Zapis preferencji",
+    createTaskPlan: "Plan zadania",
+    verifyTaskResult: "Kontrola jakości",
+    publishArtifact: "Gotowy materiał",
+  };
+
+  return labels[name] ?? "Działanie agenta";
 }
 
 function summarizeValue(value: unknown) {
@@ -363,6 +570,23 @@ function downloadDataUrl(dataUrl: string) {
   document.body.appendChild(link);
   link.click();
   link.remove();
+}
+
+function downloadTextFile(title: string, content: string) {
+  const safeTitle = title
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase() || "agent-ai-result";
+  const url = URL.createObjectURL(new Blob([content], { type: "text/markdown;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeTitle}.md`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function renderInlineMarkdown(text: string): ReactNode[] {
@@ -505,6 +729,96 @@ function MarkdownContent({ text }: { text: string }) {
   }
 
   return <div className="markdown-content">{blocks}</div>;
+}
+
+function TaskPlanCard({ plan }: { plan: TaskPlan }) {
+  return (
+    <section className="agent-runtime-card agent-plan-card" aria-label="Plan działania agenta">
+      <div className="agent-runtime-heading">
+        <span>PLAN</span>
+        <div>
+          <strong>Plan działania</strong>
+          <small>{plan.goal}</small>
+        </div>
+        <em>{plan.steps.length} kroki</em>
+      </div>
+      <ol className="agent-plan-steps">
+        {plan.steps.map((step, index) => (
+          <li key={`${step.title}-${index}`}>
+            <b>{step.index ?? index + 1}</b>
+            <div>
+              <strong>{step.title}</strong>
+              <p>{step.outcome}</p>
+              {step.capabilities?.length ? (
+                <span>{step.capabilities.join(" · ")}</span>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className="agent-plan-deliverable"><span>Rezultat</span>{plan.deliverable}</p>
+    </section>
+  );
+}
+
+function TaskVerificationCard({ verification }: { verification: TaskVerification }) {
+  const passed = verification.status === "passed";
+
+  return (
+    <section className={`agent-runtime-card agent-verification-card ${passed ? "is-passed" : "needs-attention"}`}>
+      <div className="agent-verification-summary">
+        <span>{passed ? "✓" : "!"}</span>
+        <div>
+          <strong>{passed ? "Wynik zweryfikowany" : "Wynik wymaga uwagi"}</strong>
+          <small>Pewność {Math.round(verification.confidence)}%</small>
+        </div>
+      </div>
+      <div className="agent-verification-checks">
+        {verification.checks.map((check, index) => (
+          <span key={`${check.label}-${index}`} title={check.note || undefined}>
+            <i>{check.passed ? "✓" : "!"}</i>{check.label}
+          </span>
+        ))}
+      </div>
+      {verification.missing?.length ? (
+        <p>Do sprawdzenia: {verification.missing.join(" · ")}</p>
+      ) : null}
+    </section>
+  );
+}
+
+function ArtifactCard({ artifact }: { artifact: PublishedArtifact }) {
+  return (
+    <section className="agent-artifact">
+      <header>
+        <div>
+          <span>GOTOWY MATERIAŁ</span>
+          <h3>{artifact.title}</h3>
+          <p>{artifact.summary}</p>
+        </div>
+        <div className="agent-artifact-actions">
+          <button
+            onClick={() => void navigator.clipboard.writeText(artifact.content)}
+            type="button"
+          >
+            Kopiuj
+          </button>
+          <button onClick={() => downloadTextFile(artifact.title, artifact.content)} type="button">
+            Pobierz .md ↓
+          </button>
+        </div>
+      </header>
+      <div className="agent-artifact-content">
+        <MarkdownContent text={artifact.content} />
+      </div>
+      {artifact.suggestedActions?.length ? (
+        <footer>
+          <span>Możesz teraz</span>
+          <div>{artifact.suggestedActions.map((action) => <b key={action}>{action}</b>)}</div>
+        </footer>
+      ) : null}
+    </section>
+  );
 }
 
 function getReactSectionKind(title: string) {
@@ -771,6 +1085,7 @@ export default function ChatClient({
   showReactSteps = false,
   showTravelCards = false,
   showDiagnostics = false,
+  productExperience = false,
 }: ChatClientProps) {
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<ChatMode>("casual");
@@ -911,6 +1226,14 @@ export default function ChatClient({
       setIsHistoryLoading(true);
 
       try {
+        if (productExperience && !requestedConversationId) {
+          conversationIdRef.current = null;
+          conversationHasUserMessageRef.current = false;
+          handledMessageIdsRef.current = new Set();
+          setMessages([]);
+          return;
+        }
+
         const userId = await requireUserId();
         userIdRef.current = userId;
         const conversationQuery = supabase
@@ -983,7 +1306,7 @@ export default function ChatClient({
     return () => {
       isMounted = false;
     };
-  }, [requestedConversationId, setMessages]);
+  }, [productExperience, requestedConversationId, setMessages]);
 
   const ensureConversation = useCallback(async (firstMessage = "Nowa rozmowa") => {
     if (conversationIdRef.current) {
@@ -1028,7 +1351,7 @@ export default function ChatClient({
         return;
       }
 
-      const content = getMessageText(message).trim();
+      const content = getPersistableMessageContent(message);
 
       if (!content) {
         return;
@@ -1103,7 +1426,7 @@ export default function ChatClient({
 
     for (const message of messages) {
       const shouldWaitForAssistant = message.role === "assistant" && status !== "ready";
-      const hasContent = getMessageText(message).trim().length > 0;
+      const hasContent = getPersistableMessageContent(message).length > 0;
 
       if (
         shouldWaitForAssistant ||
@@ -1179,20 +1502,20 @@ export default function ChatClient({
     pendingAssistantIdRef.current = null;
   }, [status]);
 
-  function validateImage(file: File) {
-    if (!acceptedImageTypes.includes(file.type)) {
-      return "Akceptuję tylko PNG, JPG, JPEG, GIF albo WEBP.";
+  function validateFile(file: File) {
+    if (!acceptedFileTypes.includes(file.type)) {
+      return "Akceptuję obrazy, PDF, TXT, CSV albo JSON.";
     }
 
-    if (file.size > maxImageSize) {
-      return "Max 4MB. Zrób screenshot fragmentu.";
+    if (file.size > maxFileSize) {
+      return "Plik może mieć maksymalnie 4 MB.";
     }
 
     return "";
   }
 
-  async function readImageFile(file: File) {
-    const validationError = validateImage(file);
+  async function readFile(file: File) {
+    const validationError = validateFile(file);
 
     if (validationError) {
       setImageError(validationError);
@@ -1202,7 +1525,7 @@ export default function ChatClient({
     const url = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("Nie udało się wczytać obrazu."));
+      reader.onerror = () => reject(new Error("Nie udało się wczytać pliku."));
       reader.readAsDataURL(file);
     });
 
@@ -1215,6 +1538,7 @@ export default function ChatClient({
       },
       name: file.name || "Screenshot",
       size: file.size,
+      isImage: file.type.startsWith("image/"),
     });
     setImageError("");
   }
@@ -1232,7 +1556,7 @@ export default function ChatClient({
 
     if (file) {
       event.preventDefault();
-      await readImageFile(file);
+      await readFile(file);
     }
   }
 
@@ -1240,7 +1564,7 @@ export default function ChatClient({
     const file = event.target.files?.[0];
 
     if (file) {
-      await readImageFile(file);
+      await readFile(file);
     }
 
     event.target.value = "";
@@ -1265,11 +1589,11 @@ export default function ChatClient({
     setIsDraggingFile(false);
 
     const file = Array.from(event.dataTransfer.files).find((droppedFile) =>
-      droppedFile.type.startsWith("image/"),
+      acceptedFileTypes.includes(droppedFile.type),
     );
 
     if (file) {
-      await readImageFile(file);
+      await readFile(file);
     }
   }
 
@@ -1278,7 +1602,7 @@ export default function ChatClient({
       return;
     }
 
-    const textToSend = text || "Opisz ten obraz.";
+    const textToSend = text || (attachedImage?.isImage ? "Opisz ten obraz." : "Przeanalizuj załączony plik.");
     const detectedName = getNameFromMessage(textToSend);
 
     if (detectedName) {
@@ -1323,7 +1647,12 @@ export default function ChatClient({
     setImageError("");
     setMessageDurations({});
     setHistoryError("");
-    void ensureConversation();
+    if (productExperience) {
+      window.history.replaceState(null, "", "/chat");
+      setRequestedConversationId(null);
+    } else {
+      void ensureConversation();
+    }
   }
 
   async function handleExportConversation() {
@@ -1356,9 +1685,57 @@ export default function ChatClient({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {isDraggingFile ? <div className="drop-overlay">Upuść obraz</div> : null}
+      {isDraggingFile ? <div className="drop-overlay">Upuść plik</div> : null}
       <SiteNavigation />
-      <section className="chat-panel" aria-label="Czat z agentem AI">
+      <section className={`chat-panel ${productExperience ? "chat-panel-product" : ""}`} aria-label="Czat z agentem AI">
+        {productExperience ? (
+          <header className="product-chat-bar">
+            <div className="product-chat-identity">
+              <span>✦</span>
+              <div>
+                <strong>{title}</strong>
+                <small><i /> gotowy do działania</small>
+              </div>
+            </div>
+            <div className="product-chat-controls">
+              <div className="product-model-switcher" aria-label="Model AI">
+                {(Object.keys(aiModels) as AIModel[]).map((modelName) => (
+                  <button
+                    aria-pressed={modelName === model}
+                    className={modelName === model ? "product-model-active" : ""}
+                    disabled={isChatBusy}
+                    key={modelName}
+                    onClick={() => setModel(modelName)}
+                    type="button"
+                  >
+                    {aiModels[modelName].emoji} {aiModels[modelName].label}
+                  </button>
+                ))}
+              </div>
+              <button className="product-new-conversation" disabled={isChatBusy} onClick={handleNewConversation} type="button">
+                <span>＋</span> Nowa
+              </button>
+              <button
+                aria-expanded={isContextOpen}
+                aria-label="Opcje rozmowy"
+                className="product-more-button"
+                onClick={() => setIsContextOpen((isOpen) => !isOpen)}
+                type="button"
+              >
+                •••
+              </button>
+            </div>
+            {isContextOpen ? (
+              <div className="product-chat-popover">
+                <span>{conversationStats.messages} wiadomości · około {conversationStats.tokens} tokenów</span>
+                <button disabled={visibleMessages.length === 0} onClick={handleExportConversation} type="button">
+                  Kopiuj rozmowę
+                </button>
+                {exportStatus ? <em>{exportStatus}</em> : null}
+              </div>
+            ) : null}
+          </header>
+        ) : (
         <header className="chat-header">
           <h1>{title}</h1>
           <p className="agent-description">{description}</p>
@@ -1394,8 +1771,9 @@ export default function ChatClient({
             </div>
           ) : null}
         </header>
+        )}
 
-        <section className="context-panel" aria-label="Kontekst rozmowy">
+        {!productExperience ? <section className="context-panel" aria-label="Kontekst rozmowy">
           <button
             aria-expanded={isContextOpen}
             className="context-toggle"
@@ -1435,9 +1813,9 @@ export default function ChatClient({
               </div>
             </div>
           ) : null}
-        </section>
+        </section> : null}
 
-        <section className="model-panel" aria-label="Model AI">
+        {!productExperience ? <section className="model-panel" aria-label="Model AI">
           <span>Model AI</span>
           <div className="model-switcher">
             {(Object.keys(aiModels) as AIModel[]).map((modelName) => {
@@ -1460,7 +1838,7 @@ export default function ChatClient({
               );
             })}
           </div>
-        </section>
+        </section> : null}
 
         <div className="messages" aria-live="polite">
           {isHistoryLoading ? (
@@ -1480,6 +1858,34 @@ export default function ChatClient({
                 <span>📁 Kliknij - wybierz plik</span>
                 <span>🖱️ Przeciągnij - upuść obraz</span>
               </button>
+            ) : productExperience ? (
+              <div className="product-welcome">
+                <div className="product-welcome-visual" aria-hidden="true">
+                  <span>✦</span>
+                  <i /><i /><i />
+                </div>
+                <p className="product-welcome-kicker">JEDEN AGENT · KAŻDE ZADANIE</p>
+                <h2>
+                  {profile?.display_name ? `Cześć, ${profile.display_name.split(" ")[0]}.` : "Dzień dobry."}
+                  <br /><span>Co chcesz dziś osiągnąć?</span>
+                </h2>
+                <p className="product-welcome-copy">Analizuj, twórz, planuj i pracuj z własnymi materiałami — w jednej rozmowie.</p>
+                {exampleQuestions.length > 0 ? (
+                  <div className="product-starter-grid" aria-label="Przykładowe zadania">
+                    {exampleQuestions.slice(0, 4).map((question, index) => {
+                      const meta = productStarterMeta[index] ?? productStarterMeta[0];
+
+                      return (
+                        <button disabled={isChatBusy} key={question} onClick={() => handleExampleQuestion(question)} type="button">
+                          <span>{meta.icon}</span>
+                          <div><strong>{meta.label}</strong><small>{meta.detail}</small></div>
+                          <b>↗</b>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <div className="empty-state">
                 <p>
@@ -1497,6 +1903,24 @@ export default function ChatClient({
               const sources = getMessageSources(message);
               const images = getMessageImages(message);
               const toolParts = getToolParts(message);
+              const executionToolParts = toolParts.filter(
+                (toolPart) => !runtimeToolNames.has(getToolName(toolPart)),
+              );
+              const failedToolParts = executionToolParts.filter(
+                (toolPart) => Boolean(toolPart.errorText || getToolError(toolPart.output)),
+              );
+              const hasRunningTools = executionToolParts.some(
+                (toolPart) =>
+                  toolPart.state !== "output-available" &&
+                  !toolPart.errorText &&
+                  !getToolError(toolPart.output),
+              );
+              const taskPlan = getTaskPlan(toolParts);
+              const taskVerification = getTaskVerification(toolParts);
+              const publishedArtifact = getPublishedArtifact(toolParts);
+              const generatedToolImages = executionToolParts
+                .map((toolPart) => getGeneratedImage(toolPart.output))
+                .filter((image): image is string => Boolean(image));
               const isUser = message.role === "user";
               const parsedAnswer = isUser
                 ? { content: text, citations: [] as string[] }
@@ -1513,7 +1937,7 @@ export default function ChatClient({
                   key={message.id}
                 >
                   <div className={`message ${isUser ? "message-user" : "message-ai"}`}>
-                    {!isUser ? (
+                    {!isUser && !productExperience ? (
                       <div className="message-badges">
                         {showModeSwitcher ? (
                           <span
@@ -1590,6 +2014,38 @@ export default function ChatClient({
                         ))}
                       </div>
                     ) : null}
+                    {productExperience && taskPlan ? <TaskPlanCard plan={taskPlan} /> : null}
+                    {productExperience && executionToolParts.length > 0 ? (
+                      <div className={`product-tool-activity ${failedToolParts.length ? "has-errors" : ""} ${hasRunningTools ? "is-running" : ""}`}>
+                        <span>{failedToolParts.length ? "!" : "✦"}</span>
+                        <div>
+                          <strong>
+                            {hasRunningTools
+                              ? "Agent realizuje plan..."
+                              : failedToolParts.length
+                                ? "Część działań wymagała obejścia"
+                                : `Agent wykonał ${executionToolParts.length === 1 ? "1 działanie" : `${executionToolParts.length} działań`}`}
+                          </strong>
+                          <small>{executionToolParts.map((toolPart) => getToolLabel(getToolName(toolPart))).join(" · ")}</small>
+                        </div>
+                      </div>
+                    ) : null}
+                    {productExperience && generatedToolImages.length > 0 ? (
+                      <div className="product-generated-images">
+                        {generatedToolImages.map((image, imageIndex) => (
+                          <figure key={`${image.slice(0, 40)}-${imageIndex}`}>
+                            <img alt="Grafika wygenerowana przez Agenta AI" src={image} />
+                            <button onClick={() => downloadDataUrl(image)} type="button">Pobierz grafikę ↓</button>
+                          </figure>
+                        ))}
+                      </div>
+                    ) : null}
+                    {productExperience && taskVerification ? (
+                      <TaskVerificationCard verification={taskVerification} />
+                    ) : null}
+                    {productExperience && publishedArtifact ? (
+                      <ArtifactCard artifact={publishedArtifact} />
+                    ) : null}
                     {!isUser && showTravelCards ? (
                       <TravelPlanContent text={parsedAnswer.content} />
                     ) : !isUser && showReactSteps ? (
@@ -1617,7 +2073,7 @@ export default function ChatClient({
                         </div>
                       </div>
                     ) : null}
-                    {!isUser && toolParts.length > 0 ? (
+                    {!isUser && !productExperience && toolParts.length > 0 ? (
                       <div className="tool-stats">
                         Użyto {toolParts.length} narzędzi
                         {duration ? ` | ${duration.toFixed(1)}s` : ""}
@@ -1665,7 +2121,7 @@ export default function ChatClient({
           />
         ) : null}
 
-        <form className="composer" onSubmit={handleSubmit}>
+        <form className={`composer ${productExperience ? "composer-product" : ""}`} onSubmit={handleSubmit}>
           {showModeSwitcher ? (
             <div className="mode-switcher" aria-label="Tryb rozmowy">
               {(Object.keys(chatModes) as ChatMode[]).map((modeName) => {
@@ -1704,9 +2160,13 @@ export default function ChatClient({
           ) : null}
           {attachedImage ? (
             <div className="attachment-preview">
-              <img alt={attachedImage.name} src={attachedImage.filePart.url} />
+              {attachedImage.isImage ? (
+                <img alt={attachedImage.name} src={attachedImage.filePart.url} />
+              ) : (
+                <span className="attachment-file-icon" aria-hidden="true">▤</span>
+              )}
               <div>
-                <strong>📎 Screenshot - zadaj pytanie o ten obraz</strong>
+                <strong>{attachedImage.isImage ? "Screenshot gotowy do analizy" : "Dokument gotowy do analizy"}</strong>
                 <span>{attachedImage.name}</span>
               </div>
               <button
@@ -1721,7 +2181,7 @@ export default function ChatClient({
           ) : null}
           {imageError ? <div className="attachment-error">{imageError}</div> : null}
           <input
-            accept="image/*"
+            accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,text/csv,application/json"
             className="file-input"
             onChange={handleFileInputChange}
             ref={fileInputRef}
@@ -1734,7 +2194,7 @@ export default function ChatClient({
             onClick={() => fileInputRef.current?.click()}
             type="button"
           >
-            📎
+            {productExperience ? "＋" : "📎"}
           </button>
           <input
             aria-label="Wiadomość"
@@ -1744,9 +2204,10 @@ export default function ChatClient({
             placeholder={inputPlaceholder}
             value={input}
           />
-          <button disabled={isChatBusy || (!input.trim() && !attachedImage)} type="submit">
-            Wyślij
+          <button className={productExperience ? "product-send-button" : ""} disabled={isChatBusy || (!input.trim() && !attachedImage)} type="submit">
+            {productExperience ? "↑" : "Wyślij"}
           </button>
+          {productExperience ? <small className="product-composer-note">Agent AI może popełniać błędy. Ważne informacje warto zweryfikować.</small> : null}
         </form>
       </section>
     </main>

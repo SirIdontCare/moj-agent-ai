@@ -38,6 +38,8 @@ const testGroups = [
       { href: "/extract", label: "Ekstrakcja danych", detail: "Obraz i tekst do struktury", icon: "⌗" },
       { href: "/format", label: "Formatowanie", detail: "Transformacja treści", icon: "¶" },
       { href: "/search", label: "Wyszukiwanie", detail: "Grounding w internecie", icon: "⌕" },
+      { href: "/upload", label: "Import wiedzy", detail: "Test indeksowania dokumentów", icon: "↑" },
+      { href: "/knowledge", label: "Eksplorator wiedzy", detail: "Podgląd bazy dokumentów", icon: "▤" },
     ],
   },
 ];

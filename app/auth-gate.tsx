@@ -15,6 +15,7 @@ const adminOnlyPrefixes = [
   "/fewshot",
   "/format",
   "/generate",
+  "/knowledge",
   "/meal-planner",
   "/react",
   "/report",
@@ -22,6 +23,7 @@ const adminOnlyPrefixes = [
   "/search",
   "/think",
   "/travel",
+  "/upload",
   "/vision",
 ];
 

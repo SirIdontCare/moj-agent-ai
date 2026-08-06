@@ -28,8 +28,14 @@ import {
 import { recordSecurityEvent } from "@/lib/security-events";
 import { searchKnowledge } from "@/lib/knowledge";
 import { authenticateRequest, unauthorizedResponse } from "@/lib/supabase-server";
+import { createUniversalAgentTools } from "@/lib/universal-agent-tools";
+import {
+  agentRuntimeInstructions,
+  createAgentRuntimeTools,
+  isComplexAgentTask,
+} from "@/lib/agent-runtime";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const PRIMARY_MODEL = "gemini-2.5-flash";
 const PRO_MODEL = "gemini-3.1-pro-preview";
@@ -295,7 +301,7 @@ Odpowiadam kreatywnie i nieszablonowo. Używam metafor, analogii i krótkiego st
 - Język: polski
 - Ton: konkretny, wizualny, pomocny
 - Nie zgaduj drobnych danych, których nie da się odczytać z obrazu.`,
-  agent: `Jesteś autonomicznym agentem AI "Pełna moc".
+  agent: `Jesteś uniwersalnym, autonomicznym agentem AI. Użytkownik korzysta z jednego głównego czatu i oczekuje, że sam dobierzesz właściwe możliwości.
 
 ## TWOJE NARZĘDZIA
 - calculator: licz szybko i dokładnie.
@@ -303,6 +309,15 @@ Odpowiadam kreatywnie i nieszablonowo. Używam metafor, analogii i krótkiego st
 - googleSearch: szukaj aktualnych informacji w Google.
 - readWebPage: czytaj konkretne strony WWW.
 - generateImage: generuj logo, grafiki, ilustracje i posty wizualne.
+- searchKnowledge: przeszukuj prywatne dokumenty i bazę wiedzy użytkownika.
+- getWeather: sprawdzaj aktualną pogodę.
+- getExchangeRate: pobieraj kursy walut NBP.
+- getHolidays: sprawdzaj święta i dni wolne w różnych krajach.
+- searchWikipedia: pobieraj sprawdzone informacje encyklopedyczne.
+- saveAgentNote / getAgentNotes: zapisuj i odczytuj prywatne notatki.
+- saveReport / listReports / getReport: zarządzaj biblioteką raportów.
+- createMorningBriefing / getRecentBriefings / getSavedBriefing: twórz i odczytuj briefingi.
+- updateUserName / saveUserPreference: personalizuj dalszą współpracę.
 - analiza obrazów: gdy użytkownik dołączy screenshot lub zdjęcie, analizuj je bez dodatkowego narzędzia.
 
 ## JAK DZIAŁASZ
@@ -311,7 +326,14 @@ Odpowiadam kreatywnie i nieszablonowo. Używam metafor, analogii i krótkiego st
 - Gdy użytkownik prosi o aktualne dane, najpierw użyj googleSearch.
 - Gdy użytkownik poda URL, użyj readWebPage.
 - Gdy użytkownik prosi o obraz, logo, grafikę lub post wizualny, użyj generateImage.
-- Po użyciu narzędzi daj krótką, konkretną odpowiedź po polsku i wyjaśnij wynik.
+- Gdy pyta o swoją firmę, ofertę, cennik lub procedury, najpierw użyj searchKnowledge.
+- Gdy prosi o podróż, sam połącz pogodę, waluty, święta, informacje o miejscu, wyszukiwanie i obliczenia.
+- Gdy prosi o raport lub analizę konkurencji, zbierz i zweryfikuj źródła, wykonaj potrzebne obliczenia, a dopiero potem przygotuj wynik.
+- Gdy prosi o plan posiłków, uwzględnij wszystkie ograniczenia, policz porcje i koszty oraz jasno oznacz szacunki.
+- Gdy wkleja e-maile, sklasyfikuj priorytet i przygotuj szkice odpowiedzi bez wymagania osobnego trybu.
+- Zapisuj notatkę, raport lub preferencję wyłącznie na wyraźną prośbę użytkownika.
+- Nie wymieniaj nazw endpointów ani nie każ użytkownikowi wybierać innego modułu. Całe zadanie realizujesz w tej rozmowie.
+- Dopasuj długość i format wyniku do zadania: proste pytanie kończ krótko, a raport, plan lub analizę przygotuj kompletnie.
 
 ## STYL
 - Język: polski
@@ -643,19 +665,16 @@ function getMessageText(message: UIMessage) {
     .join("");
 }
 
-function shouldRequireSearch(text: string, mode: ChatMode) {
-  if (mode !== "search") {
-    return false;
-  }
-
+function shouldRequireSearch(text: string) {
   return /aktual|najnowsz|dzis|teraz|ostatni|źród|zrodl|cena|koszt|kurs|premier|prezydent|wygrał|wygral|kino|repertuar|wiadomości|wiadomosci/i.test(
     text,
   );
 }
 
 function shouldSearchKnowledge(text: string) {
-  return /cennik|pakiet|ofert|cena|koszt|regulamin|warunk|faq|subskrypcj|rezygnac|anulow|usług|uslug|firma|firmow/i.test(
-    text,
+  return (
+    /cennik|pakiet|ofert|regulamin|warunk|faq|subskrypcj|rezygnac|anulow|procedur|polityk|usług|uslug/i.test(text) ||
+    /(?:cena|koszt).{0,50}(?:nasz|firm|ofert|usług|uslug)|(?:nasz|firm|ofert|usług|uslug).{0,50}(?:cena|koszt)/i.test(text)
   );
 }
 
@@ -841,9 +860,9 @@ export async function POST(request: Request) {
   const selectedMode = getChatMode(mode);
   const lastUserText = getLastUserText(messages);
   const hasUrl = messageHasUrl(messages);
-  const requireSearch = shouldRequireSearch(lastUserText, selectedMode);
+  const requireSearch = shouldRequireSearch(lastUserText);
   const requireKnowledgeSearch = shouldSearchKnowledge(lastUserText);
-  const isAgentMode = selectedMode === "agent";
+  const requiresPlan = isComplexAgentTask(lastUserText);
   const chatModel = wrapLanguageModel({
     model: google(selectableModels[selectedModel]),
     middleware: fallbackMiddleware,
@@ -870,27 +889,32 @@ export async function POST(request: Request) {
     readWebPage: readWebPageTool,
     generateImage: generateImageTool,
     searchKnowledge: createSearchKnowledgeTool(supabase, userId),
+    ...createUniversalAgentTools(supabase, userId),
+    ...createAgentRuntimeTools(),
     ...personalizationTools,
   };
-  const systemInstruction = `${systemPrompts[selectedMode]}\n\n${knowledgeBaseInstructions}\n\n## Personalizacja\n${personalizationPrompt}\n\n${securityInstructions}`;
+  const systemInstruction = `${systemPrompts[selectedMode]}\n\n${agentRuntimeInstructions}\n\n${knowledgeBaseInstructions}\n\n## Personalizacja\n${personalizationPrompt}\n\n${securityInstructions}`;
 
   const result = streamText({
     model: chatModel,
     system: systemInstruction,
     messages: await convertToModelMessages(messages),
-    stopWhen: isStepCount(5),
+    stopWhen: isStepCount(12),
     experimental_transform: createSystemPromptOutputFilter(systemInstruction),
-    toolChoice: isAgentMode
-      ? "auto"
-      : hasUrl
-        ? { type: "tool", toolName: "readWebPage" }
-        : requireSearch
-          ? { type: "tool", toolName: "googleSearch" }
-          : "auto",
-    prepareStep: ({ stepNumber }) =>
-      requireKnowledgeSearch && stepNumber === 0
-        ? { toolChoice: { type: "tool", toolName: "searchKnowledge" } }
-        : undefined,
+    toolChoice: "auto",
+    prepareStep: ({ stepNumber }) => {
+      if (requiresPlan && stepNumber === 0) {
+        return { toolChoice: { type: "tool" as const, toolName: "createTaskPlan" } };
+      }
+
+      const firstExecutionStep = requiresPlan ? 1 : 0;
+
+      if (stepNumber !== firstExecutionStep) return undefined;
+      if (hasUrl) return { toolChoice: { type: "tool" as const, toolName: "readWebPage" } };
+      if (requireKnowledgeSearch) return { toolChoice: { type: "tool" as const, toolName: "searchKnowledge" } };
+      if (requireSearch) return { toolChoice: { type: "tool" as const, toolName: "googleSearch" } };
+      return undefined;
+    },
     tools: chatTools,
     onEnd: async ({ usage }) => {
       await recordApiUsage(

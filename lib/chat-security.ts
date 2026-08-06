@@ -14,13 +14,17 @@ export const MAX_CHAT_REQUEST_BYTES = 6 * 1024 * 1024;
 const MAX_MESSAGES = 100;
 const MAX_MESSAGE_TEXT_LENGTH = 12_000;
 const MAX_TOTAL_TEXT_LENGTH = 60_000;
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-const MAX_IMAGE_DATA_URL_LENGTH = Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 1024;
-const acceptedImageTypes = new Set([
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_FILE_DATA_URL_LENGTH = Math.ceil((MAX_FILE_BYTES * 4) / 3) + 1024;
+const acceptedFileTypes = new Set([
   "image/png",
   "image/jpeg",
   "image/gif",
   "image/webp",
+  "application/pdf",
+  "text/plain",
+  "text/csv",
+  "application/json",
 ]);
 
 const chatRequestSchema = z
@@ -70,15 +74,15 @@ function getText(message: UIMessage) {
     .join("");
 }
 
-function isValidImagePart(part: UIMessage["parts"][number]) {
+function isValidFilePart(part: UIMessage["parts"][number]) {
   if (part.type !== "file") {
     return true;
   }
 
   return (
-    acceptedImageTypes.has(part.mediaType) &&
+    acceptedFileTypes.has(part.mediaType) &&
     part.url.startsWith(`data:${part.mediaType};base64,`) &&
-    part.url.length <= MAX_IMAGE_DATA_URL_LENGTH
+    part.url.length <= MAX_FILE_DATA_URL_LENGTH
   );
 }
 
@@ -143,14 +147,14 @@ export async function validateChatInput(payload: unknown): Promise<ChatInputVali
     ) {
       return {
         success: false,
-        error: "Wiadomość użytkownika może zawierać tylko tekst i obraz.",
+        error: "Wiadomość użytkownika może zawierać tylko tekst i załącznik.",
       };
     }
 
-    if (message.parts.some((part) => !isValidImagePart(part))) {
+    if (message.parts.some((part) => !isValidFilePart(part))) {
       return {
         success: false,
-        error: "Obraz musi być plikiem PNG, JPG, GIF lub WEBP o rozmiarze do 4 MB.",
+        error: "Załącznik musi być obrazem, PDF, TXT, CSV lub JSON o rozmiarze do 4 MB.",
       };
     }
 
@@ -178,9 +182,9 @@ export async function validateChatInput(payload: unknown): Promise<ChatInputVali
 
   const lastMessage = messages.at(-1)!;
   const lastText = getText(lastMessage).trim();
-  const hasImage = lastMessage.parts.some((part) => part.type === "file");
+  const hasFile = lastMessage.parts.some((part) => part.type === "file");
 
-  if (!lastText && !hasImage) {
+  if (!lastText && !hasFile) {
     return { success: false, error: "Wiadomość nie może być pusta." };
   }
 

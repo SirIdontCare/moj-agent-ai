@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai";
 import Image from "next/image";
+import Link from "next/link";
 import {
   type ClipboardEvent,
   type DragEvent,
@@ -16,17 +17,18 @@ import {
   useState,
 } from "react";
 import SiteNavigation from "./site-navigation";
+import Pictogram, { type PictogramName } from "./pictogram";
 import { getAuthHeaders, supabase } from "@/lib/supabase";
 
 const chatModes = {
-  casual: { emoji: "💬", label: "Casual" },
-  ekspert: { emoji: "🎓", label: "Ekspert" },
-  kreatywny: { emoji: "🎨", label: "Kreatywny" },
+  casual: { icon: "message", label: "Casual" },
+  ekspert: { icon: "graduation", label: "Ekspert" },
+  kreatywny: { icon: "image", label: "Kreatywny" },
 } as const;
 
 const aiModels = {
-  flash: { emoji: "⚡", label: "Flash", description: "szybki" },
-  pro: { emoji: "🧠", label: "Pro", description: "zaawansowany" },
+  flash: { icon: "zap", label: "Flash", description: "szybki" },
+  pro: { icon: "brain", label: "Pro", description: "zaawansowany" },
 } as const;
 
 type ChatMode = keyof typeof chatModes;
@@ -34,6 +36,7 @@ type AIModel = keyof typeof aiModels;
 
 type ChatClientProps = {
   title: string;
+  titleIcon?: PictogramName;
   description: string;
   emptyMessage: string;
   inputPlaceholder: string;
@@ -53,11 +56,11 @@ type ChatClientProps = {
 };
 
 const productStarterMeta = [
-  { icon: "⌖", label: "Zaplanuj podróż", detail: "Pogoda, waluty, daty i gotowy plan" },
-  { icon: "◎", label: "Zrób research", detail: "Aktualne źródła i jasna rekomendacja" },
-  { icon: "▤", label: "Przeanalizuj plik", detail: "PDF, dane i konkretne wnioski" },
-  { icon: "✦", label: "Stwórz briefing", detail: "Najważniejsze informacje w jednym miejscu" },
-] as const;
+  { icon: "plane", label: "Zaplanuj podróż", detail: "Pogoda, waluty, daty i gotowy plan" },
+  { icon: "search", label: "Zrób research", detail: "Aktualne źródła i jasna rekomendacja" },
+  { icon: "file", label: "Przeanalizuj plik", detail: "PDF, dane i konkretne wnioski" },
+  { icon: "sparkles", label: "Stwórz briefing", detail: "Najważniejsze informacje w jednym miejscu" },
+] satisfies Array<{ icon: PictogramName; label: string; detail: string }>;
 
 async function requireUserId() {
   const {
@@ -80,7 +83,7 @@ type AttachedImage = {
 };
 
 type ToolInfo = {
-  emoji: string;
+  icon: PictogramName;
   name: string;
   status: string;
 };
@@ -238,7 +241,7 @@ function splitKnowledgeCitations(text: string) {
       const match = line
         .trim()
         .replace(/^\*\*|\*\*$/g, "")
-        .match(/^📎\s*Źród(?:ło|ła):\s*(.+)$/i);
+        .match(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)?Źród(?:ło|ła):\s*(.+)$/iu);
 
       if (!match?.[1]) {
         return true;
@@ -454,31 +457,31 @@ function formatToolCall(toolName: string, input: unknown) {
   return `${toolName}(${JSON.stringify(firstValue)})`;
 }
 
-function getToolEmoji(name: string) {
-  const emojis: Record<string, string> = {
-    calculator: "🧮",
-    currentDateTime: "🕐",
-    googleSearch: "🌐",
-    readWebPage: "📄",
-    generateImage: "🎨",
-    getWeather: "🌦️",
-    getExchangeRate: "💱",
-    getHolidays: "📅",
-    searchWikipedia: "📚",
-    saveNote: "📝",
-    getNotes: "🗒️",
-    searchKnowledge: "📚",
-    saveAgentNote: "📝",
-    getAgentNotes: "🗒️",
-    saveReport: "💾",
-    listReports: "📊",
-    getReport: "📄",
-    createMorningBriefing: "🌅",
-    getRecentBriefings: "📰",
-    getSavedBriefing: "📰",
+function getToolIcon(name: string): PictogramName {
+  const icons: Record<string, PictogramName> = {
+    calculator: "calculator",
+    currentDateTime: "clock",
+    googleSearch: "globe",
+    readWebPage: "file",
+    generateImage: "image",
+    getWeather: "cloud-sun",
+    getExchangeRate: "coins",
+    getHolidays: "calendar",
+    searchWikipedia: "book",
+    saveNote: "pencil",
+    getNotes: "notebook",
+    searchKnowledge: "book",
+    saveAgentNote: "pencil",
+    getAgentNotes: "notebook",
+    saveReport: "save",
+    listReports: "chart",
+    getReport: "file",
+    createMorningBriefing: "sun",
+    getRecentBriefings: "newspaper",
+    getSavedBriefing: "newspaper",
   };
 
-  return emojis[name] ?? "🛠️";
+  return icons[name] ?? "wrench";
 }
 
 function getToolLabel(name: string) {
@@ -768,7 +771,7 @@ function TaskVerificationCard({ verification }: { verification: TaskVerification
   return (
     <section className={`agent-runtime-card agent-verification-card ${passed ? "is-passed" : "needs-attention"}`}>
       <div className="agent-verification-summary">
-        <span>{passed ? "✓" : "!"}</span>
+        <span><Pictogram name={passed ? "check" : "alert"} /></span>
         <div>
           <strong>{passed ? "Wynik zweryfikowany" : "Wynik wymaga uwagi"}</strong>
           <small>Pewność {Math.round(verification.confidence)}%</small>
@@ -777,7 +780,7 @@ function TaskVerificationCard({ verification }: { verification: TaskVerification
       <div className="agent-verification-checks">
         {verification.checks.map((check, index) => (
           <span key={`${check.label}-${index}`} title={check.note || undefined}>
-            <i>{check.passed ? "✓" : "!"}</i>{check.label}
+            <i><Pictogram name={check.passed ? "check" : "alert"} /></i>{check.label}
           </span>
         ))}
       </div>
@@ -823,15 +826,15 @@ function ArtifactCard({ artifact }: { artifact: PublishedArtifact }) {
 }
 
 function getReactSectionKind(title: string) {
-  if (title.includes("🧠") || /myślę|mysle/i.test(title)) {
+  if (/myślę|mysle/i.test(title)) {
     return "thought";
   }
 
-  if (title.includes("👁️") || /obserwuję|obserwuje/i.test(title)) {
+  if (/obserwuję|obserwuje/i.test(title)) {
     return "observation";
   }
 
-  if (title.includes("✅") || /wynik/i.test(title)) {
+  if (/wynik/i.test(title)) {
     return "result";
   }
 
@@ -899,27 +902,27 @@ function ReactStepContent({ text, toolCount }: { text: string; toolCount: number
 function getTravelSectionKind(title: string) {
   const normalizedTitle = title.toLowerCase();
 
-  if (title.includes("🌤️") || normalizedTitle.includes("pogoda")) {
+  if (normalizedTitle.includes("pogoda")) {
     return "weather";
   }
 
-  if (title.includes("💰") || normalizedTitle.includes("budżet") || normalizedTitle.includes("budzet")) {
+  if (normalizedTitle.includes("budżet") || normalizedTitle.includes("budzet")) {
     return "budget";
   }
 
-  if (title.includes("📅") || normalizedTitle.includes("daty") || normalizedTitle.includes("święta")) {
+  if (normalizedTitle.includes("daty") || normalizedTitle.includes("święta")) {
     return "dates";
   }
 
-  if (title.includes("🏛️") || normalizedTitle.includes("zobaczyć") || normalizedTitle.includes("atrakc")) {
+  if (normalizedTitle.includes("zobaczyć") || normalizedTitle.includes("atrakc")) {
     return "attractions";
   }
 
-  if (title.includes("✅") || normalizedTitle.includes("checklist")) {
+  if (normalizedTitle.includes("checklist")) {
     return "checklist";
   }
 
-  if (title.includes("📋") || normalizedTitle.includes("podsumowanie")) {
+  if (normalizedTitle.includes("podsumowanie")) {
     return "summary";
   }
 
@@ -971,7 +974,7 @@ function TravelPlanContent({ text }: { text: string }) {
   return (
     <div className="travel-plan">
       <header className="travel-plan-header">
-        <span aria-hidden="true">✈️</span>
+        <Pictogram name="plane" />
         <h2>{plan.title}</h2>
       </header>
       {plan.intro ? <MarkdownContent text={plan.intro} /> : null}
@@ -1029,15 +1032,15 @@ function DiagnosticsPanel({
     .join(", ");
   const status = isGenerating
     ? stepCount >= maxSteps
-      ? "⚠️ Limit kroków"
+      ? "Limit kroków"
       : "W trakcie..."
     : message
-      ? "✅ Status: Zadanie ukończone"
+      ? "Status: Zadanie ukończone"
       : "Oczekuje na zadanie";
 
   return (
     <section className="diagnostics-panel" aria-label="Diagnostyka agenta">
-      <h2>🛡️ Diagnostyka</h2>
+      <h2><Pictogram name="shield" /> Diagnostyka</h2>
       <div className="diagnostics-grid">
         <span>Kroki</span>
         <div className="diagnostics-progress-row">
@@ -1060,7 +1063,7 @@ function DiagnosticsPanel({
         <div className="diagnostics-alerts">
           {errors.map((error, index) => (
             <p key={`${error.call}-${index}`}>
-              🔴 {error.call} — {error.error}
+              <Pictogram name="alert" /> {error.call} — {error.error}
             </p>
           ))}
         </div>
@@ -1071,6 +1074,7 @@ function DiagnosticsPanel({
 
 export default function ChatClient({
   title,
+  titleIcon,
   description,
   emptyMessage,
   inputPlaceholder,
@@ -1115,6 +1119,7 @@ export default function ChatClient({
   const exportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const isCreatingConversationRef = useRef<Promise<string | null> | null>(null);
+  const conversationGenerationRef = useRef(0);
   const conversationHasUserMessageRef = useRef(false);
   const handledMessageIdsRef = useRef(new Set<string>());
   const userIdRef = useRef<string | null>(null);
@@ -1122,7 +1127,7 @@ export default function ChatClient({
     () => new DefaultChatTransport({ api, headers: async () => getAuthHeaders() }),
     [api],
   );
-  const { messages, sendMessage, setMessages, status, error } = useChat({ transport });
+  const { messages, sendMessage, setMessages, status, error, stop } = useChat({ transport });
 
   const isGenerating = status === "submitted" || status === "streaming";
   const isChatBusy = isGenerating || isHistoryLoading || isProfileLoading;
@@ -1318,6 +1323,7 @@ export default function ChatClient({
       return isCreatingConversationRef.current;
     }
 
+    const conversationGeneration = conversationGenerationRef.current;
     const createConversation = (async () => {
       const userId = userIdRef.current ?? (await requireUserId());
       userIdRef.current = userId;
@@ -1329,6 +1335,10 @@ export default function ChatClient({
 
       if (createError || !data) {
         setHistoryError(getSupabaseErrorMessage(createError));
+        return null;
+      }
+
+      if (conversationGeneration !== conversationGenerationRef.current) {
         return null;
       }
 
@@ -1636,18 +1646,28 @@ export default function ChatClient({
     await sendUserMessage(question);
   }
 
-  function handleNewConversation() {
+  async function handleNewConversation() {
+    if (isGenerating) {
+      await stop();
+    }
+
+    conversationGenerationRef.current += 1;
+    isCreatingConversationRef.current = null;
     setMessages([]);
     conversationIdRef.current = null;
     conversationHasUserMessageRef.current = false;
     handledMessageIdsRef.current = new Set();
     setMessageModes({});
     setMessageModels({});
+    setInput("");
     setExportStatus("");
     setAttachedImage(null);
     setImageError("");
     setMessageDurations({});
+    setDiagnosticElapsed(0);
     setHistoryError("");
+    pendingStartedAtRef.current = null;
+    pendingAssistantIdRef.current = null;
     if (productExperience) {
       window.history.replaceState(null, "", "/chat");
       setRequestedConversationId(null);
@@ -1687,7 +1707,7 @@ export default function ChatClient({
       onDrop={handleDrop}
     >
       {isDraggingFile ? <div className="drop-overlay">Upuść plik</div> : null}
-      <SiteNavigation />
+      <SiteNavigation onNewConversation={() => void handleNewConversation()} />
       <section className={`chat-panel ${productExperience ? "chat-panel-product" : ""}`} aria-label="Czat z agentem AI">
         {productExperience ? (
           <header className="product-chat-bar">
@@ -1709,11 +1729,25 @@ export default function ChatClient({
                     onClick={() => setModel(modelName)}
                     type="button"
                   >
-                    {aiModels[modelName].emoji} {aiModels[modelName].label}
+                    <Pictogram name={aiModels[modelName].icon} /> {aiModels[modelName].label}
                   </button>
                 ))}
               </div>
-              <button className="product-new-conversation" disabled={isChatBusy} onClick={handleNewConversation} type="button">
+              <Link
+                aria-label="Otwórz centrum dowodzenia"
+                className="product-command-center"
+                href="/dashboard"
+                title="Centrum dowodzenia"
+              >
+                <Pictogram name="chart" />
+                <span>Centrum dowodzenia</span>
+              </Link>
+              <button
+                className="product-new-conversation"
+                disabled={isHistoryLoading || isProfileLoading}
+                onClick={() => void handleNewConversation()}
+                type="button"
+              >
                 <span>＋</span> Nowa
               </button>
               <button
@@ -1738,7 +1772,7 @@ export default function ChatClient({
           </header>
         ) : (
         <header className="chat-header">
-          <h1>{title}</h1>
+          <h1>{titleIcon ? <Pictogram name={titleIcon} /> : null}{title}</h1>
           <p className="agent-description">{description}</p>
           {toolPanel.length > 0 ? (
             <div className="tool-panel" aria-label="Moje narzędzia">
@@ -1746,16 +1780,16 @@ export default function ChatClient({
               <div>
                 {toolPanel.map((toolInfo) => (
                   <span className="tool-pill" key={toolInfo.name}>
-                    <span aria-hidden="true">{toolInfo.emoji}</span>
+                    <Pictogram name={toolInfo.icon} />
                     {toolInfo.name}
-                    <strong>{toolInfo.status}</strong>
+                    <strong><Pictogram name="check" /> {toolInfo.status}</strong>
                   </span>
                 ))}
               </div>
             </div>
           ) : null}
           {profile?.display_name && visibleMessages.length === 0 ? (
-            <p className="profile-greeting">👋 Cześć, {profile.display_name}! Miło Cię znowu widzieć.</p>
+            <p className="profile-greeting"><Pictogram name="hand" /> Cześć, {profile.display_name}! Miło Cię znowu widzieć.</p>
           ) : null}
           {exampleQuestions.length > 0 && visibleMessages.length === 0 ? (
             <div className="example-questions" aria-label="Przykładowe pytania">
@@ -1793,8 +1827,8 @@ export default function ChatClient({
               </p>
               <div className="context-actions">
                 <button
-                  disabled={isChatBusy}
-                  onClick={handleNewConversation}
+                  disabled={isHistoryLoading || isProfileLoading}
+                  onClick={() => void handleNewConversation()}
                   type="button"
                 >
                   + Nowa rozmowa
@@ -1804,7 +1838,7 @@ export default function ChatClient({
                   onClick={handleExportConversation}
                   type="button"
                 >
-                  📋 Eksportuj rozmowę
+                  <Pictogram name="clipboard" /> Eksportuj rozmowę
                 </button>
                 {exportStatus ? (
                   <span className="copy-status" role="status">
@@ -1832,7 +1866,7 @@ export default function ChatClient({
                   onClick={() => setModel(modelName)}
                   type="button"
                 >
-                  <span aria-hidden="true">{modelConfig.emoji}</span>
+                  <Pictogram name={modelConfig.icon} />
                   {modelConfig.label}
                   <small>{modelConfig.description}</small>
                 </button>
@@ -1855,9 +1889,9 @@ export default function ChatClient({
                 onClick={() => fileInputRef.current?.click()}
                 type="button"
               >
-                <span>📸 Ctrl+V - wklej screenshot</span>
-                <span>📁 Kliknij - wybierz plik</span>
-                <span>🖱️ Przeciągnij - upuść obraz</span>
+                <span><Pictogram name="camera" /> Ctrl+V - wklej screenshot</span>
+                <span><Pictogram name="folder" /> Kliknij - wybierz plik</span>
+                <span><Pictogram name="mouse" /> Przeciągnij - upuść obraz</span>
               </button>
             ) : productExperience ? (
               <div className="product-welcome">
@@ -1878,7 +1912,7 @@ export default function ChatClient({
 
                       return (
                         <button disabled={isChatBusy} key={question} onClick={() => handleExampleQuestion(question)} type="button">
-                          <span>{meta.icon}</span>
+                          <span><Pictogram name={meta.icon} /></span>
                           <div><strong>{meta.label}</strong><small>{meta.detail}</small></div>
                           <b>↗</b>
                         </button>
@@ -1946,7 +1980,7 @@ export default function ChatClient({
                               messageModes[message.id] ?? mode
                             }`}
                           >
-                            {chatModes[messageModes[message.id] ?? mode].emoji}{" "}
+                            <Pictogram name={chatModes[messageModes[message.id] ?? mode].icon} />{" "}
                             {messageModes[message.id] ?? mode}
                           </span>
                         ) : null}
@@ -1955,13 +1989,13 @@ export default function ChatClient({
                             messageModel
                           }`}
                         >
-                          {aiModels[messageModel].emoji} {messageModel}
+                          <Pictogram name={aiModels[messageModel].icon} /> {messageModel}
                         </span>
                       </div>
                     ) : null}
                     {!isUser && showToolTimeline && toolParts.length > 0 ? (
                       <div className="tool-timeline">
-                        <strong>🤖 Agent wykonuje zadanie...</strong>
+                        <strong><Pictogram name="bot" /> Agent wykonuje zadanie...</strong>
                         {toolParts.map((toolPart, toolIndex) => {
                           const toolName = getToolName(toolPart);
                           const outputImage = getGeneratedImage(toolPart.output);
@@ -1971,7 +2005,7 @@ export default function ChatClient({
                               <div className="tool-step-title">
                                 <span>{toolIndex + 1}</span>
                                 <strong>
-                                  {getToolEmoji(toolName)} {toolName}
+                                  <Pictogram name={getToolIcon(toolName)} /> {toolName}
                                 </strong>
                                 <em>{toolPart.state === "output-available" ? "gotowe" : "pracuje"}</em>
                               </div>
@@ -1986,7 +2020,7 @@ export default function ChatClient({
                                       onClick={() => downloadDataUrl(outputImage)}
                                       type="button"
                                     >
-                                      💾 Pobierz
+                                      <Pictogram name="download" /> Pobierz
                                     </button>
                                   </div>
                                 ) : (
@@ -2018,7 +2052,7 @@ export default function ChatClient({
                     {productExperience && taskPlan ? <TaskPlanCard plan={taskPlan} /> : null}
                     {productExperience && executionToolParts.length > 0 ? (
                       <div className={`product-tool-activity ${failedToolParts.length ? "has-errors" : ""} ${hasRunningTools ? "is-running" : ""}`}>
-                        <span>{failedToolParts.length ? "!" : "✦"}</span>
+                        <span><Pictogram name={failedToolParts.length ? "alert" : "sparkles"} /></span>
                         <div>
                           <strong>
                             {hasRunningTools
@@ -2059,7 +2093,7 @@ export default function ChatClient({
                     {!isUser && knowledgeCitations.length > 0 ? (
                       <div className="knowledge-citations" aria-label="Źródła z bazy wiedzy">
                         <span>
-                          📎 {knowledgeCitations.length === 1 ? "Źródło" : "Źródła"}
+                          <Pictogram name="paperclip" /> {knowledgeCitations.length === 1 ? "Źródło" : "Źródła"}
                         </span>
                         <div>
                           {knowledgeCitations.map((citation) => (
@@ -2067,7 +2101,7 @@ export default function ChatClient({
                               href={`/knowledge?document=${encodeURIComponent(citation.title)}`}
                               key={citation.title}
                             >
-                              <strong>📄 {citation.title}</strong>
+                              <strong><Pictogram name="file" /> {citation.title}</strong>
                               {citation.addedAt ? <small>dodano {citation.addedAt}</small> : null}
                             </a>
                           ))}
@@ -2138,7 +2172,7 @@ export default function ChatClient({
                     onClick={() => setMode(modeName)}
                     type="button"
                   >
-                    <span aria-hidden="true">{modeConfig.emoji}</span>
+                    <Pictogram name={modeConfig.icon} />
                     {modeConfig.label}
                   </button>
                 );
@@ -2164,7 +2198,7 @@ export default function ChatClient({
               {attachedImage.isImage ? (
                 <img alt={attachedImage.name} src={attachedImage.filePart.url} />
               ) : (
-                <span className="attachment-file-icon" aria-hidden="true">▤</span>
+                <span className="attachment-file-icon"><Pictogram name="file" /></span>
               )}
               <div>
                 <strong>{attachedImage.isImage ? "Screenshot gotowy do analizy" : "Dokument gotowy do analizy"}</strong>
@@ -2176,7 +2210,7 @@ export default function ChatClient({
                 onClick={() => setAttachedImage(null)}
                 type="button"
               >
-                ×
+                <Pictogram name="x" />
               </button>
             </div>
           ) : null}
@@ -2195,7 +2229,7 @@ export default function ChatClient({
             onClick={() => fileInputRef.current?.click()}
             type="button"
           >
-            {productExperience ? "＋" : "📎"}
+            {productExperience ? "＋" : <Pictogram name="paperclip" />}
           </button>
           <input
             aria-label="Wiadomość"

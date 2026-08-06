@@ -19,7 +19,8 @@ export default function FormatPage() {
       quickTerms={formatCommands}
       renderMarkdown
       showModeSwitcher={false}
-      title="📐 Formatowanie"
+      title="Formatowanie"
+      titleIcon="ruler"
     />
   );
 }

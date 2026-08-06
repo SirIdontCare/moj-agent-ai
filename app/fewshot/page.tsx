@@ -19,7 +19,8 @@ export default function FewShotPage() {
       inputPlaceholder="Wpisz pojęcie do wyjaśnienia..."
       quickTerms={quickTerms}
       showModeSwitcher={false}
-      title="📚 Słownik AI"
+      title="Słownik AI"
+      titleIcon="book"
     />
   );
 }

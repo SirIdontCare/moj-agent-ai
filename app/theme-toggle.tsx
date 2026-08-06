@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Pictogram from "./pictogram";
 
 type Theme = "dark" | "light";
 
@@ -31,8 +32,7 @@ export default function ThemeToggle({ compact = false }: { compact?: boolean }) 
       title={`Włącz ${nextThemeLabel} motyw`}
       type="button"
     >
-      <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
-      {compact ? null : <small>{theme === "dark" ? "Jasny motyw" : "Ciemny motyw"}</small>}
+      <Pictogram name={theme === "dark" ? "sun" : "moon"} />
     </button>
   );
 }

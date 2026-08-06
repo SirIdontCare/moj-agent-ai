@@ -34,7 +34,7 @@ AUTONOMICZNIE zbierasz informacje i porównujesz je.
 
 ## FORMAT:
 
-# 🏢 Analiza konkurencji
+# Analiza konkurencji
 
 ## Porównanie
 

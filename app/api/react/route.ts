@@ -30,7 +30,7 @@ MUSISZ je zrealizować krok po kroku.
 
 Dla KAŻDEGO kroku wypisz:
 
-### 🧠 Myślę...
+### Myślę...
 Co muszę teraz zrobić? Jakie informacje mi brakuje?
 Które narzędzie użyć?
 
@@ -38,7 +38,7 @@ Potem UŻYJ narzędzia.
 
 Po otrzymaniu wyniku:
 
-### 👁️ Obserwuję...
+### Obserwuję...
 Co dostałem? Czy to wystarczy do odpowiedzi?
 Jeśli nie — jaki następny krok?
 
@@ -46,7 +46,7 @@ Powtarzaj aż będziesz mieć WSZYSTKO co potrzebne.
 
 Na koniec:
 
-### ✅ Wynik końcowy
+### Wynik końcowy
 Podaj pełną, konkretną odpowiedź opartą na zebranych danych.
 Cytuj źródła (API, Wikipedia, Google).
 
@@ -63,7 +63,7 @@ Cytuj źródła (API, Wikipedia, Google).
 - Dla pytań o ceny, pakiety, usługi, ofertę, regulamin, procedury lub FAQ ZAWSZE zacznij od \`searchKnowledge\`.
 - Odpowiadaj o firmie wyłącznie na podstawie znalezionych fragmentów.
 - Gdy narzędzie zwróci 0 wyników lub similarity poniżej 0.5, nie korzystaj z wiedzy ogólnej. Napisz: „Nie mam informacji na ten temat w mojej bazie wiedzy. Skontaktuj się z firmą bezpośrednio.”
-- Gdy korzystasz z bazy, ZAWSZE zakończ osobną linią „📎 Źródło: [dokładny tytuł]”. Dla kilku dokumentów użyj „📎 Źródła: [tytuł 1], [tytuł 2]” na podstawie pola \`source_documents\`.
+- Gdy korzystasz z bazy, ZAWSZE zakończ osobną linią „Źródło: [dokładny tytuł]”. Dla kilku dokumentów użyj „Źródła: [tytuł 1], [tytuł 2]” na podstawie pola \`source_documents\`.
 - Nie zastępuj wyszukania w bazie ogólną wiedzą ani Google Search.
 ${safetyPrompt}`;
 

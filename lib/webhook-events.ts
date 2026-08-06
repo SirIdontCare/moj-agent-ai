@@ -22,7 +22,7 @@ const formats: Record<WebhookEventType, string> = {
   feedback: `Zdarzenie: opinia klienta. Odpowiedz w formacie:
 
 **Sentyment:** [pozytywny / neutralny / negatywny]
-**Priorytet:** [🔴 Wysoki / 🟡 Średni / 🟢 Niski] — [krótkie uzasadnienie]
+**Priorytet:** [Wysoki / Średni / Niski] — [krótkie uzasadnienie]
 **Problem:** [czego dotyczy opinia]
 **Sugerowana odpowiedź:** [2-3 zdania gotowe do wysłania klientowi]`,
   alert: `Zdarzenie: alert techniczny. Odpowiedz w formacie:

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { authenticatedFetch, supabase } from "@/lib/supabase";
 import ThemeToggle from "./theme-toggle";
+import Pictogram from "./pictogram";
 import PwaInstallCard from "./pwa-install";
 
 const userNavigationGroups: Array<{
@@ -32,7 +33,7 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function SiteNavigation() {
+export default function SiteNavigation({ onNewConversation }: { onNewConversation?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -104,7 +105,7 @@ export default function SiteNavigation() {
           onClick={() => setIsOpen((current) => !current)}
           type="button"
         >
-          {isOpen ? "×" : "☰"}
+          <Pictogram name={isOpen ? "x" : "menu"} />
         </button>
       </header>
       <aside className={`app-sidebar ${isOpen ? "app-sidebar-open" : ""}`}>
@@ -116,7 +117,18 @@ export default function SiteNavigation() {
           </div>
         </div>
 
-        <Link className="sidebar-new-chat" href="/chat" onClick={() => setIsOpen(false)}>
+        <Link
+          className="sidebar-new-chat"
+          href="/chat"
+          onClick={(event) => {
+            setIsOpen(false);
+
+            if (pathname === "/chat" && onNewConversation) {
+              event.preventDefault();
+              onNewConversation();
+            }
+          }}
+        >
           <span>＋</span> Nowa rozmowa
         </Link>
 

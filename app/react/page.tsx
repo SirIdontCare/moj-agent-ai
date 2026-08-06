@@ -1,16 +1,17 @@
 import ChatClient from "../chat-client";
+import type { PictogramName } from "../pictogram";
 
-const toolPanel = [
-  { emoji: "🧮", name: "Kalkulator", status: "aktywny" },
-  { emoji: "🕐", name: "Data i czas", status: "aktywny" },
-  { emoji: "🌦️", name: "Pogoda", status: "aktywny" },
-  { emoji: "💱", name: "Kursy NBP", status: "aktywny" },
-  { emoji: "📅", name: "Święta", status: "aktywny" },
-  { emoji: "📚", name: "Wikipedia", status: "aktywny" },
-  { emoji: "📝", name: "Zapis notatek", status: "aktywny" },
-  { emoji: "🗒️", name: "Odczyt notatek", status: "aktywny" },
-  { emoji: "📄", name: "Czytanie stron", status: "aktywny" },
-  { emoji: "📚", name: "Baza wiedzy", status: "aktywny" },
+const toolPanel: Array<{ icon: PictogramName; name: string; status: string }> = [
+  { icon: "calculator", name: "Kalkulator", status: "aktywny" },
+  { icon: "clock", name: "Data i czas", status: "aktywny" },
+  { icon: "cloud-sun", name: "Pogoda", status: "aktywny" },
+  { icon: "coins", name: "Kursy NBP", status: "aktywny" },
+  { icon: "calendar", name: "Święta", status: "aktywny" },
+  { icon: "book", name: "Wikipedia", status: "aktywny" },
+  { icon: "pencil", name: "Zapis notatek", status: "aktywny" },
+  { icon: "notebook", name: "Odczyt notatek", status: "aktywny" },
+  { icon: "file", name: "Czytanie stron", status: "aktywny" },
+  { icon: "book", name: "Baza wiedzy", status: "aktywny" },
 ];
 
 const scenarios = [
@@ -33,7 +34,8 @@ export default function ReactAgentPage() {
       showModeSwitcher={false}
       showReactSteps
       showToolTimeline
-      title="🔄 Agent ReAct — Autonomiczne rozumowanie"
+      title="Agent ReAct — Autonomiczne rozumowanie"
+      titleIcon="refresh"
       toolPanel={toolPanel}
     />
   );

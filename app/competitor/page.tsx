@@ -9,6 +9,7 @@ import {
 import { type FormEvent, useMemo, useRef, useState } from "react";
 import SiteNavigation from "../site-navigation";
 import ReportMarkdown from "../report/report-markdown";
+import Pictogram from "../pictogram";
 import { getAuthHeaders } from "@/lib/supabase";
 
 const examples = [
@@ -145,7 +146,7 @@ export default function CompetitorPage() {
         <header className="competitor-hero">
           <div>
             <p>RESEARCH RYNKOWY AI</p>
-            <h1>🏢 Analiza konkurencji</h1>
+            <h1><Pictogram name="building" /> Analiza konkurencji</h1>
             <span>Podaj firmy — agent porówna je za Ciebie</span>
           </div>
           <div className="competitor-hero-visual" aria-hidden="true">
@@ -191,9 +192,9 @@ export default function CompetitorPage() {
 
             <div className="competitor-submit-row">
               <div className="competitor-tool-pills">
-                <span>🌐 Google Search</span>
-                <span>📚 Wikipedia</span>
-                <span>📄 Strony firmowe</span>
+                <span><Pictogram name="globe" /> Google Search</span>
+                <span><Pictogram name="book" /> Wikipedia</span>
+                <span><Pictogram name="file" /> Strony firmowe</span>
               </div>
               <button disabled={!canSubmit} type="submit">
                 {isAnalyzing ? (
@@ -202,7 +203,7 @@ export default function CompetitorPage() {
                     Analizuję…
                   </>
                 ) : (
-                  "🔍 Porównaj"
+                  <><Pictogram name="search" /> Porównaj</>
                 )}
               </button>
             </div>
@@ -250,7 +251,7 @@ export default function CompetitorPage() {
               </div>
               {analysis && !isAnalyzing ? (
                 <button onClick={() => void copyAnalysis()} type="button">
-                  {copyStatus || "📋 Kopiuj analizę"}
+                  {copyStatus || <><Pictogram name="copy" /> Kopiuj analizę</>}
                 </button>
               ) : null}
             </header>

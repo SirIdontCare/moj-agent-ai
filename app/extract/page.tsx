@@ -18,7 +18,8 @@ export default function ExtractPage() {
       renderMarkdown
       requestMode="vision"
       showModeSwitcher={false}
-      title="📊 Analizator"
+      title="Analizator"
+      titleIcon="chart"
       visionIntro
     />
   );

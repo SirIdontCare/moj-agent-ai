@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram, { type PictogramName } from "../pictogram";
 
 type SafeResult<T> = {
   data: T | null;
@@ -15,7 +16,7 @@ type WeatherData = {
   humidity?: number;
   windSpeed?: number;
   description: string;
-  emoji: string;
+  weatherCode: number;
   source: string;
   updatedAt: string;
 };
@@ -64,13 +65,13 @@ type DashboardData = {
 };
 
 const quickActions = [
-  { href: "/travel", label: "Zaplanuj podróż", emoji: "🌍" },
-  { href: "/react", label: "Agent ReAct", emoji: "🔄" },
-  { href: "/chat", label: "Chat z agentem", emoji: "💬" },
-  { href: "/think", label: "Tryb myślenia", emoji: "🧠" },
-  { href: "/generate", label: "Generator grafik", emoji: "🎨" },
-  { href: "/fewshot", label: "Słownik AI", emoji: "📚" },
-];
+  { href: "/travel", label: "Zaplanuj podróż", icon: "globe" },
+  { href: "/react", label: "Agent ReAct", icon: "refresh" },
+  { href: "/chat", label: "Chat z agentem", icon: "message" },
+  { href: "/think", label: "Tryb myślenia", icon: "brain" },
+  { href: "/generate", label: "Generator grafik", icon: "image" },
+  { href: "/fewshot", label: "Słownik AI", icon: "book" },
+] satisfies Array<{ href: string; label: string; icon: PictogramName }>;
 
 function formatUpdateTime(value?: string) {
   if (!value) {
@@ -171,7 +172,7 @@ export default function DashboardClient() {
         <header className="dashboard-hero">
           <div>
             <p>Centrum dowodzenia agenta</p>
-            <h1>🌅 Dzień dobry!</h1>
+            <h1><Pictogram name="sun" /> Dzień dobry!</h1>
             <span>
               Dziś: {data?.now.dateTime ?? "ładowanie aktualnej daty..."}
             </span>
@@ -183,14 +184,14 @@ export default function DashboardClient() {
             onClick={() => void refreshAll()}
             type="button"
           >
-            🔄
+            <Pictogram name="refresh" />
           </button>
         </header>
 
         <div className="dashboard-grid">
           <article className="dashboard-card dashboard-card-weather">
             <div className="dashboard-card-title">
-              <h2>🌤️ Pogoda</h2>
+              <h2><Pictogram name="cloud-sun" /> Pogoda</h2>
               <span>Ostatnia aktualizacja: {formatUpdateTime(weather?.updatedAt)}</span>
             </div>
             {isLoading ? (
@@ -201,7 +202,7 @@ export default function DashboardClient() {
               <div className="weather-card-body">
                 <strong>{weather.city}</strong>
                 <div>
-                  <span>{weather.emoji}</span>
+                  <span><Pictogram name="cloud-sun" /></span>
                   <b>{weather.temperature}°C</b>
                 </div>
                 <p>{weather.description}</p>
@@ -213,7 +214,7 @@ export default function DashboardClient() {
 
           <article className="dashboard-card dashboard-card-rates">
             <div className="dashboard-card-title">
-              <h2>💶 Kursy walut</h2>
+              <h2><Pictogram name="coins" /> Kursy walut</h2>
               <span>Ostatnia aktualizacja: {formatUpdateTime(rates?.updatedAt)}</span>
             </div>
             {isLoading ? (
@@ -236,7 +237,7 @@ export default function DashboardClient() {
 
           <article className="dashboard-card dashboard-card-holidays">
             <div className="dashboard-card-title">
-              <h2>📅 Nadchodzące święta</h2>
+              <h2><Pictogram name="calendar" /> Nadchodzące święta</h2>
               <span>Ostatnia aktualizacja: {formatUpdateTime(holidays?.updatedAt)}</span>
             </div>
             {isLoading ? (
@@ -265,13 +266,13 @@ export default function DashboardClient() {
 
           <article className="dashboard-card dashboard-card-actions">
             <div className="dashboard-card-title">
-              <h2>🤖 Szybkie akcje</h2>
+              <h2><Pictogram name="bot" /> Szybkie akcje</h2>
               <span>Przejdź do narzędzia</span>
             </div>
             <div className="quick-action-grid">
               {quickActions.map((action) => (
                 <Link href={action.href} key={action.href}>
-                  <span aria-hidden="true">{action.emoji}</span>
+                  <Pictogram name={action.icon} />
                   {action.label}
                 </Link>
               ))}
@@ -282,4 +283,3 @@ export default function DashboardClient() {
     </main>
   );
 }
-

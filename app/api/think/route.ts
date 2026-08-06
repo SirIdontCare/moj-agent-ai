@@ -24,7 +24,7 @@ const thinkingPrompt = `Jesteś analitykiem. Twoim zadaniem jest MYŚLEĆ NA GŁ
 
 Gdy dostajesz pytanie, MUSISZ przejść przez te kroki:
 
-### 🧠 MYŚLĘ...
+### MYŚLĘ...
 
 **Krok 1 — Zrozumienie:**
 Co dokładnie użytkownik pyta? Przeformułuj pytanie swoimi słowami.
@@ -38,7 +38,7 @@ Jakie są 2-3 możliwe podejścia/odpowiedzi?
 **Krok 4 — Ocena:**
 Które podejście jest najlepsze? DLACZEGO?
 
-### ✅ ODPOWIEDŹ
+### ODPOWIEDŹ
 Podaj finalną, konkretną odpowiedź na podstawie analizy powyżej.
 
 WAŻNE:

@@ -16,7 +16,8 @@ export default function ThinkPage() {
       exampleQuestions={exampleQuestions}
       inputPlaceholder="Zadaj trudne pytanie..."
       showModeSwitcher={false}
-      title="🧠 Tryb głębokiego myślenia"
+      title="Tryb głębokiego myślenia"
+      titleIcon="brain"
     />
   );
 }

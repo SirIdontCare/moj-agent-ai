@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import SiteNavigation from "../site-navigation";
 import ReportMarkdown from "../report/report-markdown";
+import Pictogram from "../pictogram";
 import { authenticatedFetch } from "@/lib/supabase";
 
 type BriefingSummary = {
@@ -180,7 +181,7 @@ export default function BriefingsPage() {
         <header className="saved-reports-hero">
           <div>
             <p>AUTOMATYCZNE RAPORTY</p>
-            <h1>📰 Briefingi</h1>
+            <h1><Pictogram name="newspaper" /> Briefingi</h1>
             <span>Automatyczne podsumowania dnia od Twojego agenta</span>
           </div>
           <button
@@ -189,7 +190,7 @@ export default function BriefingsPage() {
             onClick={() => void generateNow()}
             type="button"
           >
-            {isGenerating ? "Generuję…" : "🔄 Wygeneruj teraz"}
+            {isGenerating ? "Generuję…" : <><Pictogram name="refresh" /> Wygeneruj teraz</>}
           </button>
         </header>
 
@@ -210,7 +211,7 @@ export default function BriefingsPage() {
               <p className="saved-reports-list-status">Wczytuję briefingi…</p>
             ) : briefings.length === 0 ? (
               <div className="saved-reports-empty-list">
-                <span>📭</span>
+                <span><Pictogram name="inbox" /></span>
                 <strong>Brak briefingów</strong>
                 <p>Cron job wygeneruje pierwszy jutro rano!</p>
                 <button
@@ -219,7 +220,7 @@ export default function BriefingsPage() {
                   onClick={() => void generateNow()}
                   type="button"
                 >
-                  {isGenerating ? "Generuję…" : "🔄 Wygeneruj teraz"}
+                  {isGenerating ? "Generuję…" : <><Pictogram name="refresh" /> Wygeneruj teraz</>}
                 </button>
               </div>
             ) : (
@@ -237,7 +238,7 @@ export default function BriefingsPage() {
                   >
                     <strong>{formatBriefingDate(briefing.date)}</strong>
                     <p>{briefing.preview}</p>
-                    <small>✅ wygenerowany automatycznie (z cron)</small>
+                    <small><Pictogram name="check" /> wygenerowany automatycznie (z cron)</small>
                   </button>
                 ))}
               </div>
@@ -260,7 +261,7 @@ export default function BriefingsPage() {
                     </strong>
                   </div>
                   <button onClick={() => void copyBriefing()} type="button">
-                    {copyStatus || "📋 Kopiuj"}
+                    {copyStatus || <><Pictogram name="copy" /> Kopiuj</>}
                   </button>
                 </header>
                 <article className="saved-report-document">
@@ -269,7 +270,7 @@ export default function BriefingsPage() {
               </>
             ) : (
               <div className="saved-report-placeholder">
-                <span>📄</span>
+                <span><Pictogram name="file" /></span>
                 <strong>Wybierz briefing</strong>
                 <p>Treść wybranego briefingu pojawi się w tym miejscu.</p>
               </div>

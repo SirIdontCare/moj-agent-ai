@@ -7,37 +7,38 @@ import type { User } from "@supabase/supabase-js";
 import ChatClient from "./chat-client";
 import { supabase } from "@/lib/supabase";
 import ThemeToggle from "./theme-toggle";
+import Pictogram, { type PictogramName } from "./pictogram";
 
 const capabilities = [
   {
     index: "01",
-    icon: "◎",
+    icon: "search",
     title: "Research, który kończy się decyzją",
     description: "Agent przeszukuje internet, czyta źródła, porównuje opcje i oddaje jasną rekomendację — nie listę linków.",
     accent: "violet",
   },
   {
     index: "02",
-    icon: "▤",
+    icon: "file",
     title: "Dokumenty zamienione w działanie",
     description: "Dodaj PDF, CSV albo screenshot. Dostaniesz wnioski, ryzyka, decyzje i konkretną listę kolejnych kroków.",
     accent: "cyan",
   },
   {
     index: "03",
-    icon: "✦",
+    icon: "sparkles",
     title: "Gotowy materiał, nie luźna odpowiedź",
     description: "Raport, plan podróży, briefing, analiza czy drafty maili pojawiają się jako dopracowany materiał do użycia.",
     accent: "mint",
   },
   {
     index: "04",
-    icon: "◈",
+    icon: "history",
     title: "Kontekst, który pracuje dalej",
     description: "Agent pamięta rozmowę, korzysta z Twojej bazy wiedzy i zapisuje ustalenia wtedy, gdy go o to poprosisz.",
     accent: "amber",
   },
-];
+] satisfies Array<{ index: string; icon: PictogramName; title: string; description: string; accent: string }>;
 
 const workflow = [
   { number: "01", title: "Mówisz, jaki ma być efekt", text: "Jednym zdaniem. Bez komend, modułów i uczenia się interfejsu." },
@@ -46,11 +47,11 @@ const workflow = [
 ];
 
 const outcomes = [
-  { icon: "⌖", title: "Podróż", text: "Pogoda, kursy, daty i budżet" },
-  { icon: "◉", title: "Research", text: "Źródła, porównanie i rekomendacja" },
-  { icon: "▥", title: "Analiza", text: "Pliki, dane i najważniejsze decyzje" },
-  { icon: "✦", title: "Tworzenie", text: "Raporty, briefingi, grafiki i drafty" },
-];
+  { icon: "plane", title: "Podróż", text: "Pogoda, kursy, daty i budżet" },
+  { icon: "search", title: "Research", text: "Źródła, porównanie i rekomendacja" },
+  { icon: "chart", title: "Analiza", text: "Pliki, dane i najważniejsze decyzje" },
+  { icon: "sparkles", title: "Tworzenie", text: "Raporty, briefingi, grafiki i drafty" },
+] satisfies Array<{ icon: PictogramName; title: string; text: string }>;
 
 function BrandMark() {
   return (
@@ -79,7 +80,7 @@ function ProductPreview() {
         <div className="preview-chat preview-chat-v3">
           <header className="preview-chat-header preview-chat-header-v3">
             <div><span className="preview-status-dot" /><strong>Agent AI</strong><small>gotowy do działania</small></div>
-            <div className="preview-model"><span>⚡ Flash</span><b>＋</b></div>
+            <div className="preview-model"><span><Pictogram name="zap" /> Flash</span><b>＋</b></div>
           </header>
           <div className="preview-messages preview-messages-v3">
             <div className="preview-message preview-message-user preview-product-prompt">
@@ -93,19 +94,19 @@ function ProductPreview() {
               <div><i>3</i><span><strong>Przygotuję rekomendację</strong><small>Werdykt z uzasadnieniem</small></span></div>
             </div>
 
-            <div className="preview-tool-run"><span>✦</span><div><strong>Agent wykonał 5 działań</strong><small>Research · strony WWW · obliczenia · weryfikacja</small></div></div>
+            <div className="preview-tool-run"><span><Pictogram name="sparkles" /></span><div><strong>Agent wykonał 5 działań</strong><small>Research · strony WWW · obliczenia · weryfikacja</small></div></div>
 
             <div className="preview-artifact">
               <header><div><span>GOTOWY MATERIAŁ</span><strong>Rekomendacja narzędzi AI</strong></div><b>↓</b></header>
               <p>Najlepszy wybór: <strong>zestaw hybrydowy</strong> — szybki model do codziennej pracy i Pro do zadań strategicznych.</p>
-              <div><span>✓ Źródła</span><span>✓ Koszty</span><span>✓ Werdykt</span></div>
+              <div><span><Pictogram name="check" /> Źródła</span><span><Pictogram name="check" /> Koszty</span><span><Pictogram name="check" /> Werdykt</span></div>
             </div>
           </div>
           <div className="preview-composer preview-composer-v3"><span>Zleć kolejne zadanie…</span><button aria-label="Wyślij" tabIndex={-1}>↑</button></div>
         </div>
       </div>
-      <div className="preview-proof-card preview-proof-card-top"><span>✓</span><div><strong>Wynik zweryfikowany</strong><small>Pewność 94%</small></div></div>
-      <div className="preview-proof-card preview-proof-card-bottom"><span>✦</span><div><strong>Gotowe do użycia</strong><small>Raport · 4 min</small></div></div>
+      <div className="preview-proof-card preview-proof-card-top"><span><Pictogram name="check" /></span><div><strong>Wynik zweryfikowany</strong><small>Pewność 94%</small></div></div>
+      <div className="preview-proof-card preview-proof-card-bottom"><span><Pictogram name="sparkles" /></span><div><strong>Gotowe do użycia</strong><small>Raport · 4 min</small></div></div>
     </div>
   );
 }
@@ -126,7 +127,7 @@ function LandingPage() {
       <section className="landing-hero landing-hero-v3">
         <div className="landing-orb landing-orb-one" /><div className="landing-orb landing-orb-two" />
         <div className="landing-hero-copy">
-          <div className="landing-eyebrow"><span>✦</span> Jeden czat · wszystkie narzędzia</div>
+          <div className="landing-eyebrow"><span><Pictogram name="sparkles" /></span> Jeden czat · wszystkie narzędzia</div>
           <h1>Zleć cel.<br /><span>Agent zrobi resztę.</span></h1>
           <p>
             Research, dokumenty, obliczenia, grafiki i gotowe materiały. Agent sam układa plan,
@@ -136,7 +137,7 @@ function LandingPage() {
             <Link className="landing-primary-cta" href="/login?mode=register">Zacznij za darmo <span>→</span></Link>
             <a className="landing-secondary-cta" href="#jak-dziala"><span className="landing-play">▶</span> Zobacz, jak pracuje</a>
           </div>
-          <div className="landing-no-risk"><span>✓ Bez karty</span><span>✓ Start w 30 sekund</span><span>✓ Prywatne dane</span></div>
+          <div className="landing-no-risk"><span><Pictogram name="check" /> Bez karty</span><span><Pictogram name="check" /> Start w 30 sekund</span><span><Pictogram name="check" /> Prywatne dane</span></div>
         </div>
         <ProductPreview />
       </section>
@@ -160,7 +161,7 @@ function LandingPage() {
           <span>Nie musisz wiedzieć, którego narzędzia użyć. Opisz cel — Agent sam połączy właściwe elementy.</span>
           <div className="landing-tool-cloud"><b>Internet</b><b>Dokumenty</b><b>Obliczenia</b><b>Obrazy</b><b>Pamięć</b></div>
         </div>
-        <div className="landing-result-chip"><span>✓</span><div><small>REZULTAT</small><strong>Gotowy materiał</strong><em>sprawdzony · do pobrania</em></div></div>
+        <div className="landing-result-chip"><span><Pictogram name="check" /></span><div><small>REZULTAT</small><strong>Gotowy materiał</strong><em>sprawdzony · do pobrania</em></div></div>
       </section>
 
       <section className="landing-features landing-features-v3" id="mozliwosci" aria-labelledby="features-title">
@@ -172,7 +173,7 @@ function LandingPage() {
         <div className="landing-capability-grid">
           {capabilities.map((capability) => (
             <article className={`landing-capability-card landing-capability-${capability.accent}`} key={capability.title}>
-              <header><span>{capability.index}</span><i>{capability.icon}</i></header>
+              <header><span>{capability.index}</span><i><Pictogram name={capability.icon} /></i></header>
               <h3>{capability.title}</h3>
               <p>{capability.description}</p>
               <div aria-hidden="true"><span /><span /><span /></div>
@@ -192,7 +193,7 @@ function LandingPage() {
           ))}
         </div>
         <div className="landing-runtime-line" aria-hidden="true">
-          <span><i>✓</i> Cel</span><b>→</b><span><i>✓</i> Plan</span><b>→</b><span><i>✓</i> Narzędzia</span><b>→</b><span><i>✓</i> Weryfikacja</span><b>→</b><span className="landing-runtime-result"><i>✦</i> Rezultat</span>
+          <span><i><Pictogram name="check" /></i> Cel</span><b>→</b><span><i><Pictogram name="check" /></i> Plan</span><b>→</b><span><i><Pictogram name="check" /></i> Narzędzia</span><b>→</b><span><i><Pictogram name="check" /></i> Weryfikacja</span><b>→</b><span className="landing-runtime-result"><i><Pictogram name="sparkles" /></i> Rezultat</span>
         </div>
       </section>
 
@@ -200,7 +201,7 @@ function LandingPage() {
         <div><p>JEDEN AGENT. RÓŻNE ZADANIA.</p><h2 id="outcomes-title">Co dziś<br /><span>chcesz osiągnąć?</span></h2></div>
         <div className="landing-outcome-grid">
           {outcomes.map((outcome) => (
-            <article key={outcome.title}><span>{outcome.icon}</span><div><strong>{outcome.title}</strong><small>{outcome.text}</small></div><b>↗</b></article>
+            <article key={outcome.title}><span><Pictogram name={outcome.icon} /></span><div><strong>{outcome.title}</strong><small>{outcome.text}</small></div><b>↗</b></article>
           ))}
         </div>
       </section>

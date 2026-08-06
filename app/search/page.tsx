@@ -18,7 +18,8 @@ export default function SearchPage() {
       renderMarkdown
       requestMode="search"
       showModeSwitcher={false}
-      title="🌐 Agent z wyszukiwarką"
+      title="Agent z wyszukiwarką"
+      titleIcon="globe"
     />
   );
 }

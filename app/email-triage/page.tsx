@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram from "../pictogram";
 import { getAuthHeaders } from "@/lib/supabase";
 
 const exampleEmails = `Mail 1 - PILNY:
@@ -68,8 +69,8 @@ function readTableValue(section: string, field: string) {
 function getPriorityKind(priority: string): Priority {
   const normalized = priority.toLocaleLowerCase("pl-PL");
 
-  if (normalized.includes("wysoki") || priority.includes("🔴")) return "high";
-  if (normalized.includes("średni") || normalized.includes("sredni") || priority.includes("🟡")) {
+  if (normalized.includes("wysoki")) return "high";
+  if (normalized.includes("średni") || normalized.includes("sredni")) {
     return "medium";
   }
 
@@ -125,14 +126,14 @@ function parseSummary(text: string, cards: EmailCard[]): Summary {
   const recommendation =
     text
       .split(/^##\s+PODSUMOWANIE\s*$/im)[1]
-      ?.match(/^\s*-\s*✅\s*Rekomendacja:\s*(.+)$/im)?.[1]
+      ?.match(/^\s*-\s*(?:\p{Extended_Pictographic}\uFE0F?\s*)?Rekomendacja:\s*(.+)$/imu)?.[1]
       ?.trim() ?? "";
 
   return {
-    high: readSummaryCount(text, /^\s*-\s*🔴\s*Pilne:\s*(\d+)/im) ?? derived.high,
-    medium: readSummaryCount(text, /^\s*-\s*🟡\s*Średnie:\s*(\d+)/im) ?? derived.medium,
-    low: readSummaryCount(text, /^\s*-\s*🟢\s*Niskie:\s*(\d+)/im) ?? derived.low,
-    spam: readSummaryCount(text, /^\s*-\s*🗑️\s*Spam:\s*(\d+)/im) ?? derived.spam,
+    high: readSummaryCount(text, /^\s*-\s*(?:\S+\s+)?Pilne:\s*(\d+)/im) ?? derived.high,
+    medium: readSummaryCount(text, /^\s*-\s*(?:\S+\s+)?Średnie:\s*(\d+)/im) ?? derived.medium,
+    low: readSummaryCount(text, /^\s*-\s*(?:\S+\s+)?Niskie:\s*(\d+)/im) ?? derived.low,
+    spam: readSummaryCount(text, /^\s*-\s*(?:\S+\s+)?Spam:\s*(\d+)/im) ?? derived.spam,
     recommendation,
   };
 }
@@ -227,11 +228,11 @@ export default function EmailTriagePage() {
         <header className="email-triage-hero">
           <div>
             <p className="email-triage-eyebrow">INTELIGENTNA SKRZYNKA</p>
-            <h1>📧 E-mail Triage</h1>
+            <h1><Pictogram name="mail" /> E-mail Triage</h1>
             <p>Wklej maile — agent posortuje i napisze odpowiedzi</p>
           </div>
           <span className="email-triage-hero-icon" aria-hidden="true">
-            ✨
+            <Pictogram name="sparkles" />
           </span>
         </header>
 
@@ -253,7 +254,7 @@ export default function EmailTriagePage() {
               onClick={() => setInput(exampleEmails)}
               type="button"
             >
-              📋 Wklej przykład
+              <Pictogram name="clipboard" /> Wklej przykład
             </button>
             <button
               className="email-triage-submit"
@@ -266,7 +267,7 @@ export default function EmailTriagePage() {
                   Analizuję…
                 </>
               ) : (
-                "📧 Analizuj maile"
+                <><Pictogram name="mail" /> Analizuj maile</>
               )}
             </button>
           </div>
@@ -289,29 +290,29 @@ export default function EmailTriagePage() {
               </div>
               <div className="email-summary-grid">
                 <div className="email-summary-high">
-                  <span>🔴</span>
+                  <span><i className="email-priority-dot" /></span>
                   <strong>{summary.high}</strong>
                   <small>Pilne</small>
                 </div>
                 <div className="email-summary-medium">
-                  <span>🟡</span>
+                  <span><i className="email-priority-dot" /></span>
                   <strong>{summary.medium}</strong>
                   <small>Średnie</small>
                 </div>
                 <div className="email-summary-low">
-                  <span>🟢</span>
+                  <span><i className="email-priority-dot" /></span>
                   <strong>{summary.low}</strong>
                   <small>Niskie</small>
                 </div>
                 <div className="email-summary-spam">
-                  <span>🗑️</span>
+                  <span><Pictogram name="trash" /></span>
                   <strong>{summary.spam}</strong>
                   <small>Spam</small>
                 </div>
               </div>
               {summary.recommendation ? (
                 <p className="email-recommendation">
-                  <span>✅</span>
+                  <span><Pictogram name="check" /></span>
                   <span>
                     <strong>Rekomendacja</strong>
                     {summary.recommendation}
@@ -336,7 +337,7 @@ export default function EmailTriagePage() {
                         <h3>{card.subject}</h3>
                       </div>
                       <span className={`email-priority email-priority-${card.priorityKind}`}>
-                        {card.isSpam ? "🗑️ Spam" : `${card.priorityKind === "high" ? "🔴" : card.priorityKind === "medium" ? "🟡" : "🟢"} ${priorityLabel(card.priorityKind)}`}
+                        {card.isSpam ? <><Pictogram name="trash" /> Spam</> : <><i className="email-priority-dot" /> {priorityLabel(card.priorityKind)}</>}
                       </span>
                     </div>
                     <dl className="email-card-details">
@@ -356,7 +357,7 @@ export default function EmailTriagePage() {
                     {card.draft ? (
                       <div className={`email-draft${hasReply ? "" : " email-draft-no-reply"}`}>
                         <div className="email-draft-heading">
-                          <strong>{hasReply ? "✍️ Proponowana odpowiedź" : "ℹ️ Dalsze działanie"}</strong>
+                          <strong>{hasReply ? <><Pictogram name="pencil" /> Proponowana odpowiedź</> : <><Pictogram name="info" /> Dalsze działanie</>}</strong>
                           {hasReply ? (
                             <button onClick={() => void copyDraft(card)} type="button">
                               {copiedMail === card.number ? "✓ Skopiowano" : "Kopiuj draft"}

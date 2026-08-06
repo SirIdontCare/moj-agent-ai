@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram from "../pictogram";
 import { authenticatedFetch } from "@/lib/supabase";
 
 type KnowledgeDocument = {
@@ -175,7 +176,7 @@ export default function UploadPage() {
 
       setTitle("");
       setContent("");
-      setNotice(`✅ Zapisano ${savedChunks} ${savedChunks === 1 ? "fragment" : "fragmentów"}!`);
+      setNotice(`Zapisano ${savedChunks} ${savedChunks === 1 ? "fragment" : "fragmentów"}!`);
       await loadDocuments();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Nie udało się zapisać dokumentu.");
@@ -223,7 +224,7 @@ export default function UploadPage() {
       <section className="upload-panel" aria-label="Baza wiedzy">
         <header className="upload-header">
           <p>RAG · INGESTIA DOKUMENTÓW</p>
-          <h1>📚 Baza wiedzy</h1>
+          <h1><Pictogram name="book" /> Baza wiedzy</h1>
           <span>Wklej tekst — agent będzie z niego korzystał.</span>
         </header>
 
@@ -282,7 +283,7 @@ export default function UploadPage() {
           {notice ? <p className="upload-message upload-message-success" role="status">{notice}</p> : null}
 
           <button className="upload-submit" disabled={isSaving} type="submit">
-            {isSaving ? "⏳ Zapisuję fragmenty..." : "📤 Zapisz w bazie wiedzy"}
+            {isSaving ? "Zapisuję fragmenty..." : <><Pictogram name="upload" /> Zapisz w bazie wiedzy</>}
           </button>
         </form>
 
@@ -293,7 +294,7 @@ export default function UploadPage() {
               <h2 id="saved-documents-heading">Zapisane dokumenty</h2>
             </div>
             <button disabled={isLoadingDocuments} onClick={() => void loadDocuments()} type="button">
-              🔄 Odśwież
+              <Pictogram name="refresh" /> Odśwież
             </button>
           </div>
 
@@ -304,7 +305,7 @@ export default function UploadPage() {
               {documents.map((document) => (
                 <article className="knowledge-document" key={document.title}>
                   <div>
-                    <strong>📄 {document.title}</strong>
+                    <strong><Pictogram name="file" /> {document.title}</strong>
                     <span>{document.chunks} {document.chunks === 1 ? "fragment" : "fragmentów"} · dodano {formatDate(document.createdAt)}</span>
                   </div>
                   <button
@@ -312,7 +313,7 @@ export default function UploadPage() {
                     onClick={() => void deleteDocument(document.title)}
                     type="button"
                   >
-                    {deletingTitle === document.title ? "Usuwanie..." : "🗑️ Usuń"}
+                    {deletingTitle === document.title ? "Usuwanie..." : <><Pictogram name="trash" /> Usuń</>}
                   </button>
                 </article>
               ))}

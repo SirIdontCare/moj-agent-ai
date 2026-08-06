@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SiteNavigation from "../site-navigation";
 import ReportMarkdown from "../report/report-markdown";
+import Pictogram from "../pictogram";
 import { authenticatedFetch } from "@/lib/supabase";
 
 type ReportSummary = {
@@ -143,7 +144,7 @@ export default function SavedReportsPage() {
         <header className="saved-reports-hero">
           <div>
             <p>PRYWATNA BIBLIOTEKA</p>
-            <h1>🗂️ Zapisane raporty</h1>
+            <h1><Pictogram name="folder" /> Zapisane raporty</h1>
             <span>Przeglądaj raporty zapisane na Twoim koncie</span>
           </div>
           <Link href="/report">＋ Wygeneruj nowy raport</Link>
@@ -166,7 +167,7 @@ export default function SavedReportsPage() {
               <p className="saved-reports-list-status">Wczytuję raporty…</p>
             ) : reports.length === 0 ? (
               <div className="saved-reports-empty-list">
-                <span>📭</span>
+                <span><Pictogram name="inbox" /></span>
                 <strong>Brak zapisanych raportów</strong>
                 <p>Wygeneruj raport i użyj przycisku „Zapisz w bazie”.</p>
                 <Link href="/report">Przejdź do generatora</Link>
@@ -205,7 +206,7 @@ export default function SavedReportsPage() {
                     </strong>
                   </div>
                   <button onClick={() => void copyReport()} type="button">
-                    {copyStatus || "📋 Kopiuj raport"}
+                    {copyStatus || <><Pictogram name="copy" /> Kopiuj raport</>}
                   </button>
                 </header>
                 <article className="saved-report-document">
@@ -232,7 +233,7 @@ export default function SavedReportsPage() {
               </>
             ) : (
               <div className="saved-report-placeholder">
-                <span>📄</span>
+                <span><Pictogram name="file" /></span>
                 <strong>Wybierz raport</strong>
                 <p>Treść wybranego raportu pojawi się w tym miejscu.</p>
               </div>

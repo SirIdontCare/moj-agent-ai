@@ -8039,17 +8039,17 @@ textarea {
 
 /* Theme controls and light appearance */
 .theme-toggle {
+  width: 40px;
   min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.045);
   color: #d9d5e2;
   cursor: pointer;
-  padding: 0 12px;
+  padding: 0;
   transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
@@ -8060,15 +8060,10 @@ textarea {
   transform: translateY(-1px);
 }
 
-.theme-toggle > span {
+.theme-toggle > svg {
   color: #b9a5fb;
-  font-size: 0.92rem;
-}
-
-.theme-toggle small {
-  color: inherit;
-  font-size: 0.7rem;
-  font-weight: 750;
+  width: 18px;
+  height: 18px;
 }
 
 .theme-toggle-compact {
@@ -8076,6 +8071,14 @@ textarea {
   min-height: 38px;
   border-radius: 50%;
   padding: 0;
+}
+
+.email-priority-dot {
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .landing-nav-actions {
@@ -8235,7 +8238,7 @@ textarea {
   color: #4f475b;
 }
 
-[data-theme="light"] .theme-toggle > span { color: #7054ce; }
+[data-theme="light"] .theme-toggle > svg { color: #7054ce; }
 
 [data-theme="light"] .landing-shell {
   --landing-ink: #26222e;
@@ -9059,9 +9062,14 @@ textarea {
 .product-model-switcher button.product-model-active { background: rgba(255,255,255,.07); box-shadow: inset 0 1px rgba(255,255,255,.05); color: #dedce6; }
 .product-model-switcher button:disabled { cursor: not-allowed; opacity: .5; }
 
+.product-command-center,
 .product-new-conversation,
 .product-more-button {
   min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 9px;
   background: rgba(255,255,255,.035);
@@ -9070,8 +9078,11 @@ textarea {
   font-size: .59rem;
   font-weight: 750;
   padding: 0 11px;
+  text-decoration: none;
 }
 
+.product-command-center svg { width: 14px; height: 14px; color: #a994f7; }
+.product-command-center:hover,
 .product-new-conversation:hover,
 .product-more-button:hover { border-color: rgba(148,125,247,.3); background: rgba(141,114,246,.08); color: #eeeafc; }
 .product-more-button { width: 34px; padding: 0; letter-spacing: .08em; }
@@ -9102,6 +9113,18 @@ textarea {
 .chat-panel-product .messages {
   position: relative;
   padding: 32px max(22px, calc((100% - 900px) / 2));
+}
+
+/* Product chat renders its own plan, activity and artifact cards. The generic
+   assistant bubble must not wrap those cards in a second dark surface. */
+.chat-panel-product .message-ai {
+  width: min(100%, 700px);
+  max-width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
 }
 
 .product-welcome {
@@ -9257,8 +9280,10 @@ textarea {
 [data-theme="light"] .product-chat-bar { border-color: rgba(49,40,71,.08); background: rgba(255,255,255,.72); }
 [data-theme="light"] .product-chat-identity strong { color: #28242e; }
 [data-theme="light"] .product-model-switcher,
+[data-theme="light"] .product-command-center,
 [data-theme="light"] .product-new-conversation,
 [data-theme="light"] .product-more-button { border-color: rgba(49,40,71,.1); background: rgba(70,52,109,.035); }
+[data-theme="light"] .product-command-center { color: #514861; }
 [data-theme="light"] .product-model-switcher button.product-model-active { background: #fff; color: #514861; box-shadow: 0 4px 14px rgba(42,33,65,.08); }
 [data-theme="light"] .product-welcome h2 { color: #292530; }
 [data-theme="light"] .product-welcome-copy { color: #77717f; }
@@ -9266,7 +9291,9 @@ textarea {
 [data-theme="light"] .product-starter-grid small { color: #7b7483; }
 [data-theme="light"] .composer-product { border-color: rgba(49,40,71,.13); background: rgba(255,255,255,.96); box-shadow: 0 24px 70px rgba(42,33,65,.13); }
 [data-theme="light"] .product-chat-popover { border-color: rgba(49,40,71,.11); background: rgba(255,255,255,.98); color: #78717f; }
-[data-theme="light"] .product-tool-activity { border-color: rgba(51,153,121,.15); background: rgba(51,153,121,.055); color: #3f6559; }
+[data-theme="light"] .product-tool-activity { border-color: rgba(37,112,89,.22); background: rgba(51,153,121,.07); color: #244f42; }
+[data-theme="light"] .product-tool-activity strong { color: #1f453a; font-weight: 800; }
+[data-theme="light"] .product-tool-activity small { color: #4e6c63; }
 
 @media (max-width: 1050px) {
   .product-starter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 650px; }
@@ -9278,6 +9305,8 @@ textarea {
   .product-chat-identity > span { width: 32px; height: 32px; border-radius: 10px; }
   .product-chat-identity small { display: none; }
   .product-model-switcher { display: none; }
+  .product-command-center { width: 34px; padding: 0; }
+  .product-command-center span { display: none; }
   .product-new-conversation { font-size: 0; width: 34px; padding: 0; }
   .product-new-conversation span { font-size: .9rem; }
   .product-chat-popover { right: 10px; }
@@ -9433,21 +9462,28 @@ textarea {
 .agent-artifact > footer > div { display: flex; flex-wrap: wrap; gap: 5px; }
 .agent-artifact > footer b { border-radius: 999px; background: rgba(255,255,255,.035); color: #888b98; font-size: .48rem; font-weight: 550; padding: 4px 7px; }
 
-[data-theme="light"] .agent-runtime-card { border-color: rgba(92, 67, 181, .13); background: rgba(80, 57, 125, .026); }
+[data-theme="light"] .agent-runtime-card { border-color: rgba(92, 67, 181, .18); background: #fbfaff; }
 [data-theme="light"] .agent-runtime-heading { border-bottom-color: rgba(49,40,71,.07); }
+[data-theme="light"] .agent-runtime-heading > span { border-color: rgba(92,67,181,.25); background: rgba(92,67,181,.08); color: #593ba8; }
 [data-theme="light"] .agent-runtime-heading strong,
-[data-theme="light"] .agent-plan-steps strong { color: #3d3747; }
+[data-theme="light"] .agent-plan-steps strong { color: #211d28; font-weight: 800; }
 [data-theme="light"] .agent-runtime-heading small,
-[data-theme="light"] .agent-plan-steps p { color: #7b7484; }
+[data-theme="light"] .agent-plan-steps p { color: #5e5866; }
+[data-theme="light"] .agent-runtime-heading em { color: #5c5663; }
 [data-theme="light"] .agent-plan-steps li > b { background: #fff; }
+[data-theme="light"] .agent-plan-steps span { color: #66559c; }
+[data-theme="light"] .agent-plan-deliverable { border-top-color: rgba(49,40,71,.1); color: #514b57; }
 [data-theme="light"] .agent-verification-card.is-passed { background: rgba(51,153,121,.045); }
-[data-theme="light"] .agent-verification-summary strong { color: #376456; }
+[data-theme="light"] .agent-verification-summary strong { color: #214c3e; font-weight: 800; }
 [data-theme="light"] .agent-artifact { border-color: rgba(92,67,181,.15); background: linear-gradient(145deg, #fff, #faf9fd); box-shadow: 0 20px 55px rgba(54,42,85,.09); }
 [data-theme="light"] .agent-artifact > header,
 [data-theme="light"] .agent-artifact > footer { border-color: rgba(49,40,71,.08); }
 [data-theme="light"] .agent-artifact h3 { color: #302a38; }
+[data-theme="light"] .agent-artifact header p { color: #5f5867; }
 [data-theme="light"] .agent-artifact-content .markdown-content { color: #4d4656; }
 [data-theme="light"] .agent-artifact-content .markdown-content h2 { color: #302a38; }
+[data-theme="light"] .agent-artifact > footer > span { color: #514a59; }
+[data-theme="light"] .agent-artifact > footer b { background: rgba(70,52,109,.06); color: #514a59; }
 [data-theme="light"] .agent-artifact-actions button { border-color: rgba(49,40,71,.11); background: rgba(70,52,109,.035); color: #635b6b; }
 
 @media (max-width: 760px) {

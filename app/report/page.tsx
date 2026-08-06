@@ -14,6 +14,7 @@ import {
 } from "react";
 import SiteNavigation from "../site-navigation";
 import ReportMarkdown from "./report-markdown";
+import Pictogram from "../pictogram";
 import { getAuthHeaders } from "@/lib/supabase";
 
 const examples = [
@@ -155,7 +156,7 @@ export default function ReportPage() {
         <header className="report-hero">
           <div>
             <p className="report-eyebrow">AUTONOMICZNY RESEARCH</p>
-            <h1>📊 Generator raportów</h1>
+            <h1><Pictogram name="chart" /> Generator raportów</h1>
             <p>Opisz temat — agent napisze raport biznesowy</p>
           </div>
           <div className="report-hero-badge" aria-hidden="true">
@@ -183,7 +184,7 @@ export default function ReportPage() {
                     Tworzę raport…
                   </>
                 ) : (
-                  "📊 Generuj raport"
+                  <><Pictogram name="chart" /> Generuj raport</>
                 )}
               </button>
             </div>
@@ -206,10 +207,10 @@ export default function ReportPage() {
           </div>
 
           <div className="report-tool-strip">
-            <span>🌐 Google Search <small>gdy włączony</small></span>
-            <span>📚 Wikipedia</span>
-            <span>📄 Strony WWW</span>
-            <span>🧮 Kalkulator</span>
+            <span><Pictogram name="globe" /> Google Search <small>gdy włączony</small></span>
+            <span><Pictogram name="book" /> Wikipedia</span>
+            <span><Pictogram name="file" /> Strony WWW</span>
+            <span><Pictogram name="calculator" /> Kalkulator</span>
           </div>
         </section>
 
@@ -233,7 +234,7 @@ export default function ReportPage() {
               {report && !isGenerating ? (
                 <div className="report-result-actions">
                   <button onClick={() => void copyReport()} type="button">
-                    {copyStatus || "📋 Kopiuj do schowka"}
+                    {copyStatus || <><Pictogram name="copy" /> Kopiuj do schowka</>}
                   </button>
                   <button
                     className="report-save-button"
@@ -245,7 +246,7 @@ export default function ReportPage() {
                       ? "Zapisywanie…"
                       : saveStatus === "saved"
                         ? "✓ Zapisano w bazie"
-                        : "💾 Zapisz w bazie"}
+                        : <><Pictogram name="save" /> Zapisz w bazie</>}
                   </button>
                 </div>
               ) : null}

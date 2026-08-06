@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram from "../pictogram";
 import { supabase } from "@/lib/supabase";
 
 type Conversation = {
@@ -209,7 +210,7 @@ export default function HistoryClient() {
         <header className="history-header">
           <div>
             <p>Twoja pamięć agenta</p>
-            <h1>📜 Historia rozmów</h1>
+            <h1><Pictogram name="history" /> Historia rozmów</h1>
             <span>Wszystkie Twoje rozmowy z agentem</span>
           </div>
           <Link className="history-new-chat" href="/chat">
@@ -218,7 +219,7 @@ export default function HistoryClient() {
         </header>
 
         <label className="history-search">
-          <span>🔎</span>
+          <span><Pictogram name="search" /></span>
           <input
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Szukaj w rozmowach..."
@@ -258,7 +259,7 @@ export default function HistoryClient() {
                   onClick={() => void deleteConversation(conversation)}
                   type="button"
                 >
-                  {deletingId === conversation.id ? "Usuwanie..." : "🗑 Usuń"}
+                  {deletingId === conversation.id ? "Usuwanie..." : <><Pictogram name="trash" /> Usuń</>}
                 </button>
               </article>
             ))}

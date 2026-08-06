@@ -46,7 +46,7 @@ AUTONOMICZNIE zbierasz informacje i piszesz raport.
 
 ## FORMAT RAPORTU:
 
-# 📊 Raport: [TEMAT]
+# Raport: [TEMAT]
 Data: ${getCurrentDate()}
 Autor: Agent AI
 

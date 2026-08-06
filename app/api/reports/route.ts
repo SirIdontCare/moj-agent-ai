@@ -42,7 +42,7 @@ function normalizeSources(value: unknown): ReportSource[] {
 }
 
 function getReportTitle(topic: string, content: string) {
-  const heading = content.match(/^#\s+(?:📊\s*)?Raport:\s*(.+)$/im)?.[1]?.trim();
+  const heading = content.match(/^#\s+(?:\p{Extended_Pictographic}\uFE0F?\s*)?Raport:\s*(.+)$/imu)?.[1]?.trim();
   return (heading || topic).slice(0, 300);
 }
 

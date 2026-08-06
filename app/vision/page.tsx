@@ -19,7 +19,8 @@ export default function VisionPage() {
       renderMarkdown
       requestMode="vision"
       showModeSwitcher={false}
-      title="👁️ Agent Vision"
+      title="Agent Vision"
+      titleIcon="eye"
       visionIntro
     />
   );

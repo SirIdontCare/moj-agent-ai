@@ -40,7 +40,7 @@ Na podstawie preferencji użytkownika tworzysz wykonalny plan, który ogranicza 
 
 ## FORMAT ODPOWIEDZI
 
-# 🍽️ Plan posiłków
+# Plan posiłków
 
 ## Założenia
 - **Okres:** [...]

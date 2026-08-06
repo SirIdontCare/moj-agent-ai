@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram from "../pictogram";
 import { authenticatedFetch } from "@/lib/supabase";
 
 type KnowledgeDocument = {
@@ -167,14 +168,14 @@ export default function KnowledgePage() {
         <header className="knowledge-hero">
           <div>
             <p>RAG · WERYFIKACJA ŹRÓDEŁ</p>
-            <h1>🔎 Twoja baza wiedzy</h1>
+            <h1><Pictogram name="search" /> Twoja baza wiedzy</h1>
             <span>
               {isLoading
                 ? "Pobieram statystyki..."
                 : `${totalFragments} fragmentów z ${documents.length} ${documents.length === 1 ? "dokumentu" : "dokumentów"}`}
             </span>
           </div>
-          <Link href="/upload">📤 Dodaj dokument</Link>
+          <Link href="/upload"><Pictogram name="upload" /> Dodaj dokument</Link>
         </header>
 
         {error ? <p className="knowledge-alert" role="alert">{error}</p> : null}
@@ -192,7 +193,7 @@ export default function KnowledgePage() {
               value={query}
             />
             <button disabled={isSearching} type="submit">
-              {isSearching ? "Szukam..." : "🔎 Szukaj"}
+              {isSearching ? "Szukam..." : <><Pictogram name="search" /> Szukaj</>}
             </button>
           </form>
 
@@ -241,7 +242,7 @@ export default function KnowledgePage() {
                     onClick={() => void loadFragments(document.title)}
                     type="button"
                   >
-                    <span>📄</span>
+                    <span><Pictogram name="file" /></span>
                     <div>
                       <strong>{document.title}</strong>
                       <small>{document.chunks} {document.chunks === 1 ? "fragment" : "fragmentów"} · {formatDate(document.createdAt)}</small>

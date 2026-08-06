@@ -1,13 +1,14 @@
 import ChatClient from "../chat-client";
+import type { PictogramName } from "../pictogram";
 
-const toolPanel = [
-  { emoji: "🧮", name: "Kalkulator", status: "✅ aktywny" },
-  { emoji: "🕐", name: "Data i czas", status: "✅ aktywny" },
-  { emoji: "🌐", name: "Google Search", status: "✅ aktywny" },
-  { emoji: "📄", name: "Czytanie stron", status: "✅ aktywny" },
-  { emoji: "📚", name: "Baza wiedzy", status: "✅ aktywna" },
-  { emoji: "🎨", name: "Generowanie obrazów", status: "✅ aktywny" },
-  { emoji: "👁️", name: "Analiza obrazów", status: "✅ aktywny" },
+const toolPanel: Array<{ icon: PictogramName; name: string; status: string }> = [
+  { icon: "calculator", name: "Kalkulator", status: "aktywny" },
+  { icon: "clock", name: "Data i czas", status: "aktywny" },
+  { icon: "globe", name: "Google Search", status: "aktywny" },
+  { icon: "file", name: "Czytanie stron", status: "aktywny" },
+  { icon: "book", name: "Baza wiedzy", status: "aktywna" },
+  { icon: "image", name: "Generowanie obrazów", status: "aktywny" },
+  { icon: "eye", name: "Analiza obrazów", status: "aktywny" },
 ];
 
 const scenarios = [
@@ -30,7 +31,8 @@ export default function AgentPage() {
       requestMode="agent"
       showModeSwitcher={false}
       showToolTimeline
-      title="🤖 Agent AI - Pełna moc"
+      title="Agent AI - Pełna moc"
+      titleIcon="bot"
       toolPanel={toolPanel}
     />
   );

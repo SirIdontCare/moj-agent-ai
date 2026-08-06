@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram from "../pictogram";
 import { supabase } from "@/lib/supabase";
 
 type Conversation = {
@@ -115,7 +116,7 @@ export default function ConversationPreview({ conversationId }: { conversationId
             <span>{conversation ? formatDate(conversation.updated_at) : ""}</span>
           </div>
           <Link className="history-new-chat" href={`/chat?conversation=${encodeURIComponent(conversationId)}`}>
-            🔄 Kontynuuj rozmowę
+            <Pictogram name="refresh" /> Kontynuuj rozmowę
           </Link>
         </header>
 

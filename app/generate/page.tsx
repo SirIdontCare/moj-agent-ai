@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import SiteNavigation from "../site-navigation";
+import Pictogram from "../pictogram";
 
 const examplePrompts = [
   "Minimalistyczne logo kawiarni w stylu japońskim",
@@ -83,7 +84,7 @@ export default function GeneratePage() {
       <SiteNavigation />
       <section className="generate-panel" aria-label="Generator grafik AI">
         <header className="generate-header">
-          <h1>🎨 Generator grafik AI</h1>
+          <h1><Pictogram name="image" /> Generator grafik AI</h1>
           <p>Opisz co chcesz - AI stworzy obraz w kilka sekund</p>
         </header>
 
@@ -103,7 +104,7 @@ export default function GeneratePage() {
               onClick={() => generateImage()}
               type="button"
             >
-              {isGenerating ? "Generuję..." : "🎨 Generuj"}
+              {isGenerating ? "Generuję..." : <><Pictogram name="image" /> Generuj</>}
             </button>
 
             <div className="prompt-examples" aria-label="Przykładowe prompty">
@@ -132,16 +133,16 @@ export default function GeneratePage() {
                 {modelText ? <p className="model-comment">{modelText}</p> : null}
                 <div className="result-actions">
                   <button onClick={downloadImage} type="button">
-                    💾 Pobierz
+                    <Pictogram name="download" /> Pobierz
                   </button>
                   <button onClick={() => generateImage(prompt)} type="button">
-                    🔄 Ponownie
+                    <Pictogram name="refresh" /> Ponownie
                   </button>
                 </div>
               </div>
             ) : (
               <div className="empty-image-state">
-                <span>🎨</span>
+                <span><Pictogram name="image" /></span>
                 <p>Wybierz przykład albo opisz własną grafikę.</p>
               </div>
             )}

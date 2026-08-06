@@ -35,30 +35,6 @@ function weatherCodeToDescription(code: number) {
   return descriptions[code] ?? `kod pogody ${code}`;
 }
 
-function weatherEmoji(code: number) {
-  if (code === 0 || code === 1) {
-    return "☀️";
-  }
-
-  if (code === 2 || code === 3) {
-    return "⛅";
-  }
-
-  if (code >= 51 && code <= 82) {
-    return "🌧️";
-  }
-
-  if (code >= 71 && code <= 75) {
-    return "❄️";
-  }
-
-  if (code >= 95) {
-    return "⛈️";
-  }
-
-  return "🌤️";
-}
-
 async function fetchWithTimeout(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -121,7 +97,7 @@ async function getWeather() {
     humidity: current.relative_humidity_2m,
     windSpeed: current.wind_speed_10m,
     description: weatherCodeToDescription(weatherCode),
-    emoji: weatherEmoji(weatherCode),
+    weatherCode,
     source: "Open-Meteo",
     updatedAt: new Date().toISOString(),
   };
@@ -243,4 +219,3 @@ export async function GET(request: Request) {
     holidays,
   });
 }
-

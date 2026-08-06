@@ -110,7 +110,7 @@ export function createUniversalAgentTools(supabase: SupabaseClient, userId: stri
       }),
     ),
     execute: async ({ topic, content, sources }) => {
-      const heading = content.match(/^#\s+(?:📊\s*)?Raport:\s*(.+)$/im)?.[1]?.trim();
+      const heading = content.match(/^#\s+(?:\p{Extended_Pictographic}\uFE0F?\s*)?Raport:\s*(.+)$/imu)?.[1]?.trim();
       const { data, error } = await supabase
         .from("reports")
         .insert({

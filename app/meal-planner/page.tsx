@@ -9,6 +9,7 @@ import {
 import { type FormEvent, useMemo, useRef, useState } from "react";
 import SiteNavigation from "../site-navigation";
 import ReportMarkdown from "../report/report-markdown";
+import Pictogram, { type PictogramName } from "../pictogram";
 import { getAuthHeaders } from "@/lib/supabase";
 
 type MealPreferences = {
@@ -37,12 +38,12 @@ const initialPreferences: MealPreferences = {
 
 const examples: Array<{
   label: string;
-  emoji: string;
+  icon: PictogramName;
   preferences: MealPreferences;
 }> = [
   {
     label: "Rodzinny i oszczędny",
-    emoji: "👨‍👩‍👧‍👦",
+    icon: "users",
     preferences: {
       goal: "Zdrowe, codzienne odżywianie",
       diet: "Standardowa",
@@ -57,7 +58,7 @@ const examples: Array<{
   },
   {
     label: "Wege z dużą ilością białka",
-    emoji: "🥬",
+    icon: "leaf",
     preferences: {
       goal: "Więcej białka i energii do treningów",
       diet: "Wegetariańska",
@@ -72,7 +73,7 @@ const examples: Array<{
   },
   {
     label: "Szybko i bez laktozy",
-    emoji: "⏱️",
+    icon: "timer",
     preferences: {
       goal: "Minimum czasu w kuchni",
       diet: "Bez laktozy",
@@ -208,7 +209,7 @@ export default function MealPlannerPage() {
         <header className="meal-hero">
           <div className="meal-hero-copy">
             <p>TWÓJ TYDZIEŃ · MNIEJ MARNOWANIA · PROSTSZE ZAKUPY</p>
-            <h1>🍽️ Planer posiłków</h1>
+            <h1><Pictogram name="utensils" /> Planer posiłków</h1>
             <span>
               Dopasowany jadłospis, przepisy i lista zakupów w kilka chwil.
             </span>
@@ -379,8 +380,8 @@ export default function MealPlannerPage() {
 
             <div className="meal-submit-row">
               <div className="meal-tools">
-                <span>🧮 Porcje i koszt</span>
-                <span>🌐 Źródła online</span>
+                <span><Pictogram name="calculator" /> Porcje i koszt</span>
+                <span><Pictogram name="globe" /> Źródła online</span>
               </div>
               <button disabled={isPlanning} type="submit">
                 {isPlanning ? (
@@ -389,7 +390,7 @@ export default function MealPlannerPage() {
                     Układam jadłospis…
                   </>
                 ) : (
-                  "✨ Ułóż plan posiłków"
+                  <><Pictogram name="sparkles" /> Ułóż plan posiłków</>
                 )}
               </button>
             </div>
@@ -407,7 +408,7 @@ export default function MealPlannerPage() {
                   onClick={() => useExample(example)}
                   type="button"
                 >
-                  <span>{example.emoji}</span>
+                  <span><Pictogram name={example.icon} /></span>
                   <div>
                     <strong>{example.label}</strong>
                     <small>
@@ -420,7 +421,7 @@ export default function MealPlannerPage() {
               ))}
             </div>
             <div className="meal-safety-note">
-              <span>🛡️</span>
+              <span><Pictogram name="shield" /></span>
               <p>
                 Alergie traktujemy jako twarde wykluczenia. Przy diecie leczniczej
                 skonsultuj jadłospis ze specjalistą.
@@ -450,7 +451,7 @@ export default function MealPlannerPage() {
               </div>
               {plan && !isPlanning ? (
                 <button onClick={() => void copyPlan()} type="button">
-                  {copyStatus || "📋 Kopiuj plan"}
+                  {copyStatus || <><Pictogram name="copy" /> Kopiuj plan</>}
                 </button>
               ) : null}
             </header>
@@ -480,9 +481,9 @@ export default function MealPlannerPage() {
             ) : (
               <div className="meal-loading">
                 <div aria-hidden="true">
-                  <span>🥦</span>
-                  <span>🥕</span>
-                  <span>🍅</span>
+                  <span><Pictogram name="leaf" /></span>
+                  <span><Pictogram name="utensils" /></span>
+                  <span><Pictogram name="leaf" /></span>
                 </div>
                 <strong>Komponuję posiłki i sumuję zakupy</strong>
                 <p>Uwzględniam budżet, porcje, produkty w domu i wykluczenia.</p>

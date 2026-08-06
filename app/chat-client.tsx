@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai";
+import Image from "next/image";
 import {
   type ClipboardEvent,
   type DragEvent,
@@ -1691,7 +1692,7 @@ export default function ChatClient({
         {productExperience ? (
           <header className="product-chat-bar">
             <div className="product-chat-identity">
-              <span>✦</span>
+              <span><Image alt="" height={36} src="/brand-mark.png" width={36} /></span>
               <div>
                 <strong>{title}</strong>
                 <small><i /> gotowy do działania</small>
@@ -1861,7 +1862,7 @@ export default function ChatClient({
             ) : productExperience ? (
               <div className="product-welcome">
                 <div className="product-welcome-visual" aria-hidden="true">
-                  <span>✦</span>
+                  <span><Image alt="" height={88} src="/brand-mark.png" width={88} /></span>
                   <i /><i /><i />
                 </div>
                 <p className="product-welcome-kicker">JEDEN AGENT · KAŻDE ZADANIE</p>

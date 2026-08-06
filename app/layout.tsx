@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     description: "Jeden czat. Wszystkie narzędzia. Od celu do zweryfikowanego, gotowego rezultatu.",
     images: [
       {
-        url: "/og-image-v2.png",
+        url: "/og-image-v3.png",
         width: 1730,
         height: 909,
         alt: "Agent AI — Zleć cel. Agent zrobi resztę.",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Agent AI — Zleć cel. Agent zrobi resztę.",
     description: "Jeden czat. Wszystkie narzędzia. Od celu do gotowego rezultatu.",
-    images: ["/og-image-v2.png"],
+    images: ["/og-image-v3.png"],
   },
   appleWebApp: {
     capable: true,

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -95,7 +96,7 @@ export default function SiteNavigation() {
     <>
       <header className="mobile-nav">
         <Link className="mobile-nav-brand" href="/chat">
-          <span>✦</span> Agent AI
+          <span><Image alt="" height={30} src="/brand-mark.png" width={30} /></span> Agent AI
         </Link>
         <button
           aria-expanded={isOpen}
@@ -108,7 +109,7 @@ export default function SiteNavigation() {
       </header>
       <aside className={`app-sidebar ${isOpen ? "app-sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <span className="sidebar-brand-mark">✦</span>
+          <span className="sidebar-brand-mark"><Image alt="" height={36} src="/brand-mark.png" width={36} /></span>
           <div>
             <strong>Agent AI</strong>
             <small><i /> Gotowy do pracy</small>

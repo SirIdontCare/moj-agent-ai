@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   createContext,
   type ReactNode,
@@ -133,7 +134,7 @@ export default function PwaInstallCard() {
       >
         ×
       </button>
-      <div className="pwa-install-icon" aria-hidden="true">✦</div>
+      <div className="pwa-install-icon" aria-hidden="true"><Image alt="" height={34} src="/brand-mark.png" width={34} /></div>
       <div className="pwa-install-copy">
         <strong>Agent AI na Twoim telefonie</strong>
         <p>Szybszy dostęp i widok jak w aplikacji.</p>

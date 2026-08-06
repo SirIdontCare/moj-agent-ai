@@ -53,7 +53,11 @@ const outcomes = [
 ];
 
 function BrandMark() {
-  return <span className="landing-brand-mark" aria-hidden="true">✦</span>;
+  return (
+    <span className="landing-brand-mark" aria-hidden="true">
+      <Image alt="" height={34} src="/brand-mark.png" width={34} />
+    </span>
+  );
 }
 
 function ProductPreview() {

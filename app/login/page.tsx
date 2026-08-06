@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -79,7 +80,7 @@ function LoginForm() {
   return (
     <main className="login-shell">
       <section className="login-card" aria-labelledby="login-title">
-        <div className="login-brand" aria-hidden="true">⚡</div>
+        <div className="login-brand" aria-hidden="true"><Image alt="" height={52} src="/brand-mark.png" width={52} /></div>
         <p className="login-eyebrow">PRYWATNY AGENT AI</p>
         <h1 id="login-title">{mode === "login" ? "Witaj ponownie" : "Utwórz konto"}</h1>
         <p className="login-description">
